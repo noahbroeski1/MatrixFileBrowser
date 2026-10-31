@@ -315,6 +315,15 @@
       filterFocus += 1;
       return;
     }
+    if (mod && event.key.toLowerCase() === 'q') {
+      event.preventDefault();
+      if (isTauri) {
+        import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+          getCurrentWindow().close().catch(() => {});
+        });
+      }
+      return;
+    }
     if (mod && ['1', '2', '3'].includes(event.key)) {
       event.preventDefault();
       setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : 'mosaic');
