@@ -16,6 +16,7 @@
   import MosaicView from './views/MosaicView.svelte';
   import SunburstView from './views/SunburstView.svelte';
   import QueryView from './views/QueryView.svelte';
+  import ClustersView from './views/ClustersView.svelte';
 
   let path = $state('');
   let entries = $state<Entry[]>([]);
@@ -105,7 +106,7 @@
       tree = null;
 
       if (push) pushHistory(page.path);
-      if (view === 'treemap' || view === 'sunburst' || view === 'query') void loadTree();
+      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters') void loadTree();
       if (isTauri) backend.watchStart([page.path]).catch(() => {});
       updateHash(page.path);
     } catch (cause) {
@@ -145,7 +146,7 @@
       const ids = new Set(page.entries.map((entry) => entry.id));
       selected = new Set([...selected].filter((id) => ids.has(id)));
       if (preview && !ids.has(preview.id)) preview = null;
-      if (view === 'treemap' || view === 'sunburst' || view === 'query') void loadTree();
+      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters') void loadTree();
     } catch (cause) {
       if (token !== navToken) return;
       error = cause instanceof Error ? cause.message : String(cause);
@@ -262,7 +263,7 @@
 
   function setView(next: ViewId) {
     view = next;
-    if (next === 'treemap' || next === 'sunburst' || next === 'query') void loadTree();
+    if (next === 'treemap' || next === 'sunburst' || next === 'query' || next === 'clusters') void loadTree();
     updateHash(path);
   }
 
@@ -326,9 +327,9 @@
       }
       return;
     }
-     if (mod && ['1', '2', '3', '4', '5'].includes(event.key)) {
+     if (mod && ['1', '2', '3', '4', '5', '6'].includes(event.key)) {
       event.preventDefault();
-       setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : event.key === '3' ? 'mosaic' : event.key === '4' ? 'sunburst' : 'query');
+       setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : event.key === '3' ? 'mosaic' : event.key === '4' ? 'sunburst' : event.key === '5' ? 'query' : 'clusters');
       return;
     }
     if (event.altKey && event.key === 'ArrowLeft') {
@@ -391,7 +392,7 @@
       try {
         const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const requestedView = params.get('view');
-        if (requestedView === 'list' || requestedView === 'treemap' || requestedView === 'mosaic' || requestedView === 'sunburst' || requestedView === 'query') {
+        if (requestedView === 'list' || requestedView === 'treemap' || requestedView === 'mosaic' || requestedView === 'sunburst' || requestedView === 'query' || requestedView === 'clusters') {
           view = requestedView;
         }
         const requestedPath = params.get('path');
@@ -487,6 +488,13 @@
           />
         {:else if view === 'query'}
           <QueryView
+            root={tree}
+            loading={treeLoading}
+            {path}
+            onopen={open}
+          />
+        {:else if view === 'clusters'}
+          <ClustersView
             root={tree}
             loading={treeLoading}
             {path}

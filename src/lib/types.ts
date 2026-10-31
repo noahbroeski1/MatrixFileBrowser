@@ -54,7 +54,7 @@ export interface Place {
 }
 
 export type SortKey = 'name' | 'size' | 'modified' | 'type';
-export type ViewId = 'list' | 'treemap' | 'mosaic' | 'sunburst' | 'query';
+export type ViewId = 'list' | 'treemap' | 'mosaic' | 'sunburst' | 'query' | 'clusters';
 
 export interface ListRequest {
   path: string;
