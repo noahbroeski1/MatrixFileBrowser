@@ -29,6 +29,7 @@ Working:
 - Squarified **treemap** with drill-down, three colour modes and size rollups computed in parallel
 - **Mosaic** photo wall with thumbnail-size control and cached thumbnails
 - Preview pane, Quick Look overlay, text and image previews
+- Boot loading screen while the first folder indexes
 - Navigation history, breadcrumbs, editable location bar, filter, hidden-file toggle
 - Places sidebar: home, XDG folders, trash, mounts discovered from `/proc/mounts`
 - Debounced filesystem watching that refreshes the open folder
