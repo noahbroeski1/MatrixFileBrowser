@@ -14,6 +14,7 @@
   import ListView from './views/ListView.svelte';
   import TreemapView from './views/TreemapView.svelte';
   import MosaicView from './views/MosaicView.svelte';
+  import SunburstView from './views/SunburstView.svelte';
 
   let path = $state('');
   let entries = $state<Entry[]>([]);
@@ -260,7 +261,7 @@
 
   function setView(next: ViewId) {
     view = next;
-    if (next === 'treemap') void loadTree();
+    if (next === 'treemap' || next === 'sunburst') void loadTree();
     updateHash(path);
   }
 
@@ -324,9 +325,9 @@
       }
       return;
     }
-    if (mod && ['1', '2', '3'].includes(event.key)) {
+     if (mod && ['1', '2', '3', '4'].includes(event.key)) {
       event.preventDefault();
-      setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : 'mosaic');
+       setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : event.key === '3' ? 'mosaic' : 'sunburst');
       return;
     }
     if (event.altKey && event.key === 'ArrowLeft') {
@@ -389,7 +390,7 @@
       try {
         const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const requestedView = params.get('view');
-        if (requestedView === 'list' || requestedView === 'treemap' || requestedView === 'mosaic') {
+        if (requestedView === 'list' || requestedView === 'treemap' || requestedView === 'mosaic' || requestedView === 'sunburst') {
           view = requestedView;
         }
         const requestedPath = params.get('path');
@@ -469,6 +470,14 @@
           </div>
         {:else if view === 'treemap'}
           <TreemapView
+            root={tree}
+            loading={treeLoading}
+            {path}
+            onnavigate={(next) => void navigate(next)}
+            onopen={open}
+          />
+        {:else if view === 'sunburst'}
+          <SunburstView
             root={tree}
             loading={treeLoading}
             {path}

@@ -1,0 +1,469 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+<script lang="ts">
+  import type { Entry, TreeStats } from '../lib/types';
+  import { colorFor, type ColorMode } from '../lib/treemap';
+  import { formatBytes, formatDate } from '../lib/format';
+  import Icon from '../components/Icon.svelte';
+
+  interface Props {
+    root: TreeStats | null;
+    loading: boolean;
+    path: string;
+    onnavigate: (path: string) => void;
+    onopen: (entry: Entry) => void;
+  }
+
+  let { root, loading, path, onnavigate, onopen }: Props = $props();
+
+  let wrap: HTMLDivElement | null = $state(null);
+  let canvas: HTMLCanvasElement | null = $state(null);
+  let width = $state(0);
+  let height = $state(0);
+  let mode = $state<ColorMode>('type');
+  let zoom = $state<TreeStats | null>(null);
+  let hover = $state<{ node: TreeStats; x: number; y: number } | null>(null);
+
+  interface Arc {
+    node: TreeStats;
+    depth: number;
+    start: number;
+    end: number;
+  }
+
+  let current = $derived(zoom ?? root);
+
+  // Reset zoom whenever the browsed directory changes.
+  $effect(() => {
+    void path;
+    zoom = null;
+    hover = null;
+  });
+
+  $effect(() => {
+    const el = wrap;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      if (!wrap) return;
+      width = wrap.clientWidth;
+      height = wrap.clientHeight;
+    });
+    observer.observe(el);
+    width = el.clientWidth;
+    height = el.clientHeight;
+    return () => observer.disconnect();
+  });
+
+  const MAX_DEPTH = 5;
+
+  let arcs = $derived.by((): Arc[] => {
+    const node = current;
+    if (!node || width <= 0 || height <= 0) return [];
+    const out: Arc[] = [];
+    const maxDepth = Math.min(MAX_DEPTH, depthOf(node));
+    layout(node, 0, -Math.PI / 2, Math.PI * 1.5, maxDepth, out);
+    return out;
+  });
+
+  function depthOf(node: TreeStats): number {
+    if (!node.children.length) return 0;
+    return 1 + Math.max(...node.children.map(depthOf));
+  }
+
+  function layout(
+    node: TreeStats,
+    depth: number,
+    start: number,
+    end: number,
+    maxDepth: number,
+    out: Arc[],
+  ): void {
+    out.push({ node, depth, start, end });
+    if (depth >= maxDepth || node.children.length === 0) return;
+
+    const total = node.children.reduce((sum, child) => sum + Math.max(1, child.totalBytes), 0);
+    let cursor = start;
+    for (const child of node.children) {
+      const span = ((Math.max(1, child.totalBytes) / total) * (end - start));
+      layout(child, depth + 1, cursor, cursor + span, maxDepth, out);
+      cursor += span;
+    }
+  }
+
+  let maxDepth = $derived(arcs.reduce((m, a) => Math.max(m, a.depth), 0));
+  let ringWidth = $derived(Math.min(width, height) / 2 / (maxDepth + 1.2));
+
+  $effect(() => {
+    void arcs;
+    void mode;
+    void hover;
+    void width;
+    void height;
+    draw();
+  });
+
+  function draw() {
+    if (!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.floor(width * dpr));
+    canvas.height = Math.max(1, Math.floor(height * dpr));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    const cx = width / 2;
+    const cy = height / 2;
+
+    for (const arc of arcs) {
+      const inner = arc.depth * ringWidth;
+      const outer = (arc.depth + 1) * ringWidth;
+      if (outer <= 0 || arc.end - arc.start < 0.001) continue;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, outer, arc.start, arc.end);
+      ctx.arc(cx, cy, inner, arc.end, arc.start, true);
+      ctx.closePath();
+
+      ctx.fillStyle = colorFor(arc.node.node, mode, arc.node.newestMs);
+      ctx.fill();
+
+      if (hover && hover.node === arc.node) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+        ctx.fill();
+      }
+
+      ctx.strokeStyle = 'rgba(6, 10, 14, 0.55)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Center label
+    const rootNode = current;
+    if (rootNode) {
+      ctx.fillStyle = 'rgba(6, 10, 14, 0.55)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, ringWidth * 0.92, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(240, 246, 252, 0.95)';
+      ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fitText(ctx, rootNode.node.name, ringWidth * 1.6), cx, cy - 7);
+      ctx.fillStyle = 'rgba(200, 212, 226, 0.7)';
+      ctx.font = '10px ui-monospace, monospace';
+      ctx.fillText(formatBytes(rootNode.totalBytes), cx, cy + 9);
+    }
+  }
+
+  function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let low = 0;
+    let high = text.length;
+    while (low < high) {
+      const mid = (low + high + 1) >> 1;
+      if (ctx.measureText(`${text.slice(0, mid)}…`).width <= maxWidth) low = mid;
+      else high = mid - 1;
+    }
+    return `${text.slice(0, low)}…`;
+  }
+
+  function hitTest(px: number, py: number): TreeStats | null {
+    if (!current || width <= 0 || height <= 0) return null;
+    const cx = width / 2;
+    const cy = height / 2;
+    const dx = px - cx;
+    const dy = py - cy;
+    const r = Math.hypot(dx, dy);
+    if (r > (maxDepth + 1) * ringWidth) return null;
+    const depth = Math.floor(r / ringWidth);
+    if (depth > maxDepth) return null;
+    let angle = Math.atan2(dy, dx);
+    if (angle < -Math.PI / 2) angle += Math.PI * 2;
+    // normalize to [start0, start0+2π)
+    const offset = -Math.PI / 2;
+    let a = angle - offset;
+    if (a < 0) a += Math.PI * 2;
+
+    for (const arc of arcs) {
+      if (arc.depth !== depth) continue;
+      // arc angles are in absolute radians; convert to same offset space
+      const s = arc.start - offset;
+      const e = arc.end - offset;
+      const ss = s < 0 ? s + Math.PI * 2 : s;
+      const ee = e < 0 ? e + Math.PI * 2 : e;
+      let inRange = false;
+      if (ss <= ee) {
+        inRange = a >= ss && a < ee;
+      } else {
+        inRange = a >= ss || a < ee;
+      }
+      if (inRange) return arc.node;
+    }
+    // center
+    if (r < ringWidth) return current;
+    return null;
+  }
+
+  function onMove(event: MouseEvent) {
+    if (!canvas) return;
+    const box = canvas.getBoundingClientRect();
+    const node = hitTest(event.clientX - box.left, event.clientY - box.top);
+    hover = node ? { node, x: event.clientX - box.left, y: event.clientY - box.top } : null;
+  }
+
+  function onClick(event: MouseEvent) {
+    if (!canvas) return;
+    const box = canvas.getBoundingClientRect();
+    const node = hitTest(event.clientX - box.left, event.clientY - box.top);
+    if (!node) return;
+
+    if (node === current) {
+      // center click: zoom out if we drilled in
+      if (zoom) zoomOut();
+      return;
+    }
+    if (node.children.length > 0) {
+      zoom = node;
+      hover = null;
+    } else if (node.node.kind === 'dir') {
+      onnavigate(node.node.path);
+    } else {
+      onopen(node.node);
+    }
+  }
+
+  function zoomOut() {
+    zoom = null;
+    hover = null;
+  }
+</script>
+
+<div class="sunburst">
+  <div class="bar">
+    <div class="trail">
+      {#if zoom}
+        <button onclick={zoomOut} title="Back to root">
+          {root?.node.name ?? path}
+        </button>
+        <Icon name="chevron-right" size={11} />
+        <span class="current">{zoom.node.name}</span>
+      {:else}
+        <span class="current">{root?.node.name ?? path}</span>
+      {/if}
+    </div>
+
+    <div class="modes" role="group" aria-label="Color by">
+      {#each ['type', 'age', 'size'] as option (option)}
+        <button
+          class:active={mode === option}
+          onclick={() => (mode = option as ColorMode)}
+        >
+          {option}
+        </button>
+      {/each}
+    </div>
+  </div>
+
+  <div class="canvas-wrap" bind:this={wrap}>
+    <canvas
+      bind:this={canvas}
+      onmousemove={onMove}
+      onmouseleave={() => (hover = null)}
+      onclick={onClick}
+    ></canvas>
+
+    {#if loading}
+      <div class="overlay">
+        <span class="spinner"></span>
+        Aggregating sizes…
+      </div>
+    {:else if !current}
+      <div class="overlay">No data for this folder.</div>
+    {:else if current.children.length === 0}
+      <div class="overlay">
+        {#if current.node.kind === 'dir'}
+          This folder has no subfolders to show.
+        {:else}
+          This is a file.
+        {/if}
+      </div>
+    {/if}
+
+    {#if hover}
+      <div
+        class="tooltip"
+        style="left:{Math.min(hover.x + 14, width - 240)}px; top:{Math.min(hover.y + 14, height - 96)}px"
+      >
+        <div class="tip-name truncate">{hover.node.node.name}</div>
+        <div class="tip-row">
+          <span>{formatBytes(hover.node.totalBytes)}</span>
+          <span>{hover.node.fileCount.toLocaleString()} files</span>
+        </div>
+        <div class="tip-row muted">
+          <span>{formatDate(hover.node.newestMs)}</span>
+          <span>{hover.node.children.length > 0 ? 'click to zoom' : 'click to open'}</span>
+        </div>
+      </div>
+    {/if}
+  </div>
+</div>
+
+<style>
+  .sunburst {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 34px;
+    padding: 0 12px;
+    flex: none;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--bg);
+  }
+
+  .trail {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 11.5px;
+  }
+
+  .trail button {
+    padding: 3px 6px;
+    border-radius: 5px;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+  }
+
+  .trail button:hover {
+    background: var(--bg-3);
+    color: var(--text);
+  }
+
+  .trail :global(svg) {
+    color: var(--text-faint);
+    flex: none;
+  }
+
+  .trail .current {
+    color: var(--text);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+  }
+
+  .modes {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+    padding: 2px;
+    background: var(--bg-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+  }
+
+  .modes button {
+    padding: 3px 9px;
+    border-radius: 4px;
+    color: var(--text-faint);
+    font-size: 10.5px;
+    text-transform: capitalize;
+  }
+
+  .modes button:hover {
+    color: var(--text-dim);
+  }
+
+  .modes button.active {
+    background: var(--bg-4);
+    color: var(--accent);
+  }
+
+  .canvas-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 12.5px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--bg-4);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 700ms linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .tooltip {
+    position: absolute;
+    z-index: 5;
+    width: 226px;
+    padding: 9px 11px;
+    border-radius: 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    pointer-events: none;
+    font-size: 11.5px;
+  }
+
+  .tip-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+  }
+
+  .tip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-dim);
+  }
+
+  .tip-row.muted {
+    margin-top: 3px;
+    color: var(--text-faint);
+    font-size: 10.5px;
+  }
+</style>

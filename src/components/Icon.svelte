@@ -104,6 +104,10 @@
   {:else if name === 'sparkles'}
     <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />
     <path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />
+  {:else if name === 'sunburst'}
+    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" />
+    <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" />
+    <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" />
   {:else}
     <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
     <path d="M14 3v5h5" />

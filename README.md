@@ -128,7 +128,7 @@ npm run check && npm run build
 | --- | --- |
 | `Ctrl+L` | Edit location |
 | `Ctrl+F` | Focus filter |
-| `Ctrl+1` / `2` / `3` | List / Treemap / Mosaic |
+| `Ctrl+1` / `2` / `3` / `4` | List / Treemap / Mosaic / Sunburst |
 | `Alt+←` / `Alt+→` | Back / Forward |
 | `Backspace` | Parent folder |
 | `↑` / `↓` | Move selection |
@@ -147,14 +147,18 @@ View state lives in the URL hash, so a folder and a view can be linked:
 #view=treemap&path=%2Fhome%2Fyou%2FPictures
 ```
 
-## Roadmap
+## Milestone tracking
 
-- **M1 — read-only browser + treemap + mosaic** ✅
-- **M2** Sunburst/radial tree, query & metadata workbench
-- **M3** Semantic clusters (content similarity, not just extensions)
-- **M4** 3D memory palace (spatial, persistent layout)
-- **M5** File operations (rename, move, trash, batch), Flatpak + AppImage packaging
-- **Later** Archives and MTP/SFTP through the `Vfs` trait, plugin API for third-party views
+| Milestone | Scope | Status |
+| --- | --- | --- |
+| **M1** | Read-only browser + treemap + mosaic views | ✅ Complete |
+| **M2** | Sunburst / radial tree, query & metadata workbench | 🔄 In progress |
+| **M3** | Semantic clusters (content similarity) | ⏳ Planned |
+| **M4** | 3D memory palace (spatial, persistent layout) | ⏳ Planned |
+| **M5** | File operations (rename, move, trash, batch), Flatpak + AppImage packaging | ⏳ Planned |
+| **Later** | Archives and MTP/SFTP through the `Vfs` trait, plugin API for third-party views | ⏳ Planned |
+
+M1 ships: fast paged listing, squarified treemap with drill-down and colour modes, mosaic photo wall, preview pane, Quick Look, navigation history, breadcrumbs, filter, hidden files, places sidebar, debounced filesystem watching, keyboard shortcuts, dark/light themes, deep-linkable state, and a deterministic mock backend for browser-only dev.
 
 ## License
 

@@ -162,6 +162,9 @@
     <button class:active={view === 'mosaic'} onclick={() => onview('mosaic')} title="Mosaic (Ctrl+3)">
       <Icon name="grid" size={15} />
     </button>
+    <button class:active={view === 'sunburst'} onclick={() => onview('sunburst')} title="Sunburst (Ctrl+4)">
+      <Icon name="sunburst" size={15} />
+    </button>
   </div>
 
   <button
