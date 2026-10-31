@@ -110,7 +110,8 @@
       tree = null;
 
       if (push) pushHistory(page.path);
-      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters' || view === 'palace') void loadTree();
+      // Warm the tree cache in the background so views are ready when opened.
+      void fetchTree(page.path);
       if (isTauri) backend.watchStart([page.path]).catch(() => {});
       updateHash(page.path);
     } catch (cause) {
@@ -150,7 +151,7 @@
       const ids = new Set(page.entries.map((entry) => entry.id));
       selected = new Set([...selected].filter((id) => ids.has(id)));
       if (preview && !ids.has(preview.id)) preview = null;
-      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters' || view === 'palace') void loadTree();
+      void fetchTree(path);
     } catch (cause) {
       if (token !== navToken) return;
       error = cause instanceof Error ? cause.message : String(cause);
@@ -289,19 +290,38 @@
     preview = entry;
   }
 
-  async function loadTree() {
-    if (!path) return;
+  const treeCache = $state(new Map<string, TreeStats>());
+
+  async function fetchTree(target: string) {
+    if (!target) return;
+    const cached = treeCache.get(target);
+    if (cached) {
+      if (target === path) {
+        tree = cached;
+        treeLoading = false;
+      }
+      return;
+    }
     const token = ++treeToken;
     treeLoading = true;
-
+    tree = null;
     try {
-      const stats = await backend.treeStats(path, 4);
-      if (token === treeToken) tree = stats;
+      const stats = await backend.treeStats(target, 4);
+      treeCache.set(target, stats);
+      if (token === treeToken && target === path) {
+        tree = stats;
+        treeLoading = false;
+      }
     } catch {
-      if (token === treeToken) tree = null;
-    } finally {
-      if (token === treeToken) treeLoading = false;
+      if (token === treeToken && target === path) {
+        tree = null;
+        treeLoading = false;
+      }
     }
+  }
+
+  function loadTree() {
+    void fetchTree(path);
   }
 
   function setView(next: ViewId) {
@@ -547,14 +567,12 @@
           <QueryView
             root={tree}
             loading={treeLoading}
-            {path}
             onopen={open}
           />
         {:else if view === 'clusters'}
           <ClustersView
             root={tree}
             loading={treeLoading}
-            {path}
             onopen={open}
           />
         {:else if view === 'palace'}

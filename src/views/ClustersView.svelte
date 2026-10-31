@@ -8,11 +8,10 @@
   interface Props {
     root: TreeStats | null;
     loading: boolean;
-    path: string;
     onopen: (entry: Entry) => void;
   }
 
-  let { root, loading, path, onopen }: Props = $props();
+  let { root, loading, onopen }: Props = $props();
 
   type Mode = 'name' | 'type' | 'size';
 
@@ -123,7 +122,7 @@
     {#if loading}
       <div class="state">
         <span class="spinner"></span>
-        <p>Aggregating {path}…</p>
+        <p>Indexing this folder…</p>
       </div>
     {:else if clusters.length === 0}
       <div class="state">

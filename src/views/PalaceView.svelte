@@ -310,7 +310,7 @@
     {#if loading}
       <div class="overlay">
         <span class="spinner"></span>
-        Aggregating sizes…
+        Indexing this folder…
       </div>
     {:else if items.length === 0}
       <div class="overlay">

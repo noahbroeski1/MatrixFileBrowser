@@ -213,7 +213,7 @@
     {#if loading}
       <div class="overlay">
         <span class="spinner"></span>
-        Aggregating sizes…
+        Indexing this folder…
       </div>
     {:else if !current}
       <div class="overlay">No data for this folder.</div>

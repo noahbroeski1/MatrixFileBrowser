@@ -8,11 +8,10 @@
   interface Props {
     root: TreeStats | null;
     loading: boolean;
-    path: string;
     onopen: (entry: Entry) => void;
   }
 
-  let { root, loading, path, onopen }: Props = $props();
+  let { root, loading, onopen }: Props = $props();
 
   // Filters
   let text = $state('');
@@ -154,7 +153,7 @@
 
   <div class="results">
     {#if loading}
-      <div class="state"><span class="spinner"></span><p>Aggregating {path}…</p></div>
+      <div class="state"><span class="spinner"></span><p>Indexing this folder…</p></div>
     {:else if filtered.length === 0}
       <div class="state">
         <Icon name="search" size={24} />
