@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
+  // SPDX-License-Identifier: GPL-3.0-or-later
   import Icon from './Icon.svelte';
 
   interface Props {

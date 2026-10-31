@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
+  // SPDX-License-Identifier: GPL-3.0-or-later
   import type { DirPage, Entry } from '../lib/types';
   import { backend, assetUrl } from '../lib/api';
   import { formatBytes, formatDate, formatMode, iconFor, isImage, isText, isVideo } from '../lib/format';

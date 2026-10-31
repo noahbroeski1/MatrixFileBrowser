@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
+  // SPDX-License-Identifier: GPL-3.0-or-later
   import type { Entry, TreeStats } from '../lib/types';
   import { formatBytes, formatDate } from '../lib/format';
   import Icon from '../components/Icon.svelte';
