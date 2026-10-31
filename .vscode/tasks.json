@@ -2,6 +2,30 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "build:debug",
+      "type": "shell",
+      "command": "${env:HOME}/.cargo/bin/cargo",
+      "args": [
+        "build",
+        "--manifest-path",
+        "./src-tauri/Cargo.toml",
+        "--no-default-features"
+      ],
+      "problemMatcher": "$rustc"
+    },
+    {
+      "label": "build:release",
+      "type": "shell",
+      "command": "${env:HOME}/.cargo/bin/cargo",
+      "args": [
+        "build",
+        "--release",
+        "--manifest-path",
+        "./src-tauri/Cargo.toml"
+      ],
+      "problemMatcher": "$rustc"
+    },
+    {
       "label": "dev:server",
       "type": "shell",
       "isBackground": true,
@@ -17,11 +41,9 @@
       }
     },
     {
-      "label": "build:frontend",
-      "type": "shell",
-      "command": "npm",
-      "args": ["run", "build"],
-      "problemMatcher": "$tsc"
+      "label": "dev",
+      "dependsOn": ["build:debug", "dev:server"],
+      "group": { "kind": "build", "isDefault": true }
     }
   ]
 }

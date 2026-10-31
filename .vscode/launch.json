@@ -5,27 +5,17 @@
       "type": "lldb",
       "request": "launch",
       "name": "Tauri Development Debug",
-      "cargo": {
-        "args": [
-          "build",
-          "--manifest-path=./src-tauri/Cargo.toml",
-          "--no-default-features"
-        ]
-      },
-      "preLaunchTask": "dev:server"
+      "program": "${workspaceFolder}/target/debug/matrix-file-browser",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "dev"
     },
     {
       "type": "lldb",
       "request": "launch",
       "name": "Tauri Production Debug",
-      "cargo": {
-        "args": [
-          "build",
-          "--release",
-          "--manifest-path=./src-tauri/Cargo.toml"
-        ]
-      },
-      "preLaunchTask": "build:frontend"
+      "program": "${workspaceFolder}/target/release/matrix-file-browser",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build:release"
     }
   ]
 }
