@@ -29,10 +29,15 @@
       "label": "dev:server",
       "type": "shell",
       "isBackground": true,
-      "command": "npm",
-      "args": ["run", "dev"],
+      "command": "/usr/bin/npm",
+      "args": [
+        "run",
+        "dev"
+      ],
       "problemMatcher": {
-        "pattern": { "regexp": "^$" },
+        "pattern": {
+          "regexp": "^$"
+        },
         "background": {
           "activeOnStart": true,
           "beginsPattern": "VITE",
@@ -42,8 +47,14 @@
     },
     {
       "label": "dev",
-      "dependsOn": ["build:debug", "dev:server"],
-      "group": { "kind": "build", "isDefault": true }
+      "dependsOn": [
+        "build:debug",
+        "dev:server"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     }
   ]
 }
