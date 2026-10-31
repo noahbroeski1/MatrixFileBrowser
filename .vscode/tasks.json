@@ -8,10 +8,13 @@
       "args": [
         "build",
         "--manifest-path",
-        "./src-tauri/Cargo.toml",
+        "${workspaceFolder}/src-tauri/Cargo.toml",
         "--no-default-features"
       ],
-      "problemMatcher": "$rustc"
+      "problemMatcher": "$rustc",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
     },
     {
       "label": "build:release",
@@ -21,9 +24,12 @@
         "build",
         "--release",
         "--manifest-path",
-        "./src-tauri/Cargo.toml"
+        "${workspaceFolder}/src-tauri/Cargo.toml"
       ],
-      "problemMatcher": "$rustc"
+      "problemMatcher": "$rustc",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
     },
     {
       "label": "dev:server",
@@ -43,6 +49,9 @@
           "beginsPattern": "VITE",
           "endsPattern": "Local:"
         }
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
       }
     },
     {
