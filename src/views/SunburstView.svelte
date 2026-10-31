@@ -85,10 +85,24 @@
 
     const total = node.children.reduce((sum, child) => sum + Math.max(1, child.totalBytes), 0);
     let cursor = start;
-    for (const child of node.children) {
-      const span = ((Math.max(1, child.totalBytes) / total) * (end - start));
-      layout(child, depth + 1, cursor, cursor + span, maxDepth, out);
+    const full = end - start;
+    // Snap the last child so the ring closes exactly (avoids a radial seam
+    // when one child takes ~100% of the angle).
+    const spans = node.children.map((child) => (Math.max(1, child.totalBytes) / total) * full);
+    const drift = full - spans.reduce((a, b) => a + b, 0);
+    if (spans.length > 0) spans[spans.length - 1] += drift;
+    for (let i = 0; i < node.children.length; i += 1) {
+      const child = node.children[i];
+      let span = spans[i];
+      if (span > full) span = full;
+      if (full - span < 1e-9) span = full;
+      const childStart = cursor;
+      // Clamp to full circle.
+      const cs = childStart;
+      const ce = childStart + Math.min(span, full - (childStart - start));
+      layout(child, depth + 1, cs, Math.min(ce, start + full), maxDepth, out);
       cursor += span;
+      if (cursor > end) cursor = end;
     }
   }
 
@@ -123,9 +137,13 @@
       const outer = (arc.depth + 1) * ringWidth;
       if (outer <= 0 || arc.end - arc.start < 0.001) continue;
 
+      let s = arc.start;
+      let e = arc.end;
+      if (e - s > Math.PI * 2 - 1e-9) e = s + Math.PI * 2;
+      if (e - s < 0) e = s;
       ctx.beginPath();
-      ctx.arc(cx, cy, outer, arc.start, arc.end);
-      ctx.arc(cx, cy, inner, arc.end, arc.start, true);
+      ctx.arc(cx, cy, outer, s, e);
+      if (inner > 0) ctx.arc(cx, cy, inner, e, s, true);
       ctx.closePath();
 
       ctx.fillStyle = colorFor(arc.node.node, mode, arc.node.newestMs);
