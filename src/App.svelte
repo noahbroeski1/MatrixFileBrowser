@@ -110,8 +110,8 @@
       tree = null;
 
       if (push) pushHistory(page.path);
-      // Warm the tree cache in the background so views are ready when opened.
-      void fetchTree(page.path);
+      // Only index when a tree-dependent view is actually open.
+      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters' || view === 'palace') void loadTree();
       if (isTauri) backend.watchStart([page.path]).catch(() => {});
       updateHash(page.path);
     } catch (cause) {
@@ -151,7 +151,7 @@
       const ids = new Set(page.entries.map((entry) => entry.id));
       selected = new Set([...selected].filter((id) => ids.has(id)));
       if (preview && !ids.has(preview.id)) preview = null;
-      void fetchTree(path);
+      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters' || view === 'palace') void loadTree();
     } catch (cause) {
       if (token !== navToken) return;
       error = cause instanceof Error ? cause.message : String(cause);
