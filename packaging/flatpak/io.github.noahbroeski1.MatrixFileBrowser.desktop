@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Matrix
+Comment=A richly featured FOSS file browser
+Exec=matrix-file-browser
+Icon=io.github.noahbroeski1.MatrixFileBrowser
+Type=Application
+Categories=Utility;FileTools;FileManager;
+Terminal=false

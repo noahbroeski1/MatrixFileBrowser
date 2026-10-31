@@ -34,8 +34,8 @@ Working:
 - Debounced filesystem watching that refreshes the open folder
 - Keyboard-first operation, dark and light themes, deep-linkable view state
 
-Not built yet: packaging (Flatpak, AppImage) and cross-filesystem move
-fallback polish. File mutation is live (rename, move, trash, batch).
+All five milestones are complete. Packaging (Flatpak/AppImage) ships as a
+scaffold in `packaging/` and is not yet built in CI.
 
 ## Architecture
 
@@ -157,7 +157,7 @@ View state lives in the URL hash, so a folder and a view can be linked:
 | **M2** | Sunburst / radial tree, query & metadata workbench | ✅ Complete |
 | **M3** | Semantic clusters (name/type/size) | ✅ Complete |
 | **M4** | 3D memory palace (orbitable spatial view) | ✅ Complete |
-| **M5** | File operations (rename, move, trash, batch) | 🔄 In progress |
+| **M5** | File operations (rename, move, trash, batch) + packaging scaffold | ✅ Complete |
 | **Later** | Archives and MTP/SFTP through the `Vfs` trait, plugin API for third-party views | ⏳ Planned |
 
 M1 ships: fast paged listing, squarified treemap with drill-down and colour modes, mosaic photo wall, preview pane, Quick Look, navigation history, breadcrumbs, filter, hidden files, places sidebar, debounced filesystem watching, keyboard shortcuts, dark/light themes, deep-linkable state, and a deterministic mock backend for browser-only dev.
