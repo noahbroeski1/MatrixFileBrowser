@@ -4,9 +4,9 @@
 /src-tauri/gen
 
 # Frontend
-/ui/node_modules
-/ui/dist
-/ui/.vite
+/node_modules
+/dist
+/.vite
 
 # Local
 *.log

@@ -44,14 +44,14 @@ crates/matrix-core        Entry model, paged listing, places, Vfs trait
 crates/matrix-thumbs      Thumbnail pipeline + content-addressed disk cache
 crates/matrix-aggregate   Parallel, cancellable directory size rollups (rayon)
 src-tauri                 Tauri shell: commands, state, filesystem watcher
-ui                        Svelte 5 + TypeScript frontend
+src                       Svelte 5 + TypeScript frontend
 ```
 
 Two rules keep the layers honest:
 
 1. **Rust is the only thing that touches the filesystem.** The webview gets
    serialised `Entry` records and paths to cached thumbnails, nothing more.
-2. **The UI talks to one `Backend` interface** (`ui/src/lib/api.ts`). The Tauri
+2. **The UI talks to one `Backend` interface** (`src/lib/api.ts`). The Tauri
    implementation calls commands; a deterministic mock implementation lets the
    entire UI run in a plain browser with no Rust at all.
 
@@ -84,8 +84,10 @@ Optional, for extra thumbnail formats: `ffmpeg` (video) and `pdftoppm` from
 
 ## Getting started
 
+Run everything from the repository root — `src-tauri/` and `package.json` are
+siblings, which is what the Tauri CLI expects.
+
 ```sh
-cd ui
 npm install
 ```
 
@@ -117,7 +119,7 @@ cargo test -p matrix-core -p matrix-aggregate
 cargo clippy --all-targets -- -D warnings
 cargo fmt --all --check
 
-cd ui && npm run check && npm run build
+npm run check && npm run build
 ```
 
 ## Keyboard
