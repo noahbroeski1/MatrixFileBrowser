@@ -1,0 +1,6 @@
+{
+  "rust-analyzer.check.command": "clippy",
+  "terminal.integrated.env.linux": {
+    "PATH": "${env:HOME}/.cargo/bin:${env:PATH}"
+  }
+}
