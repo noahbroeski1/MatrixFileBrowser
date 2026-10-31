@@ -15,6 +15,7 @@
   import TreemapView from './views/TreemapView.svelte';
   import MosaicView from './views/MosaicView.svelte';
   import SunburstView from './views/SunburstView.svelte';
+  import QueryView from './views/QueryView.svelte';
 
   let path = $state('');
   let entries = $state<Entry[]>([]);
@@ -104,7 +105,7 @@
       tree = null;
 
       if (push) pushHistory(page.path);
-      if (view === 'treemap') void loadTree();
+      if (view === 'treemap' || view === 'sunburst' || view === 'query') void loadTree();
       if (isTauri) backend.watchStart([page.path]).catch(() => {});
       updateHash(page.path);
     } catch (cause) {
@@ -144,7 +145,7 @@
       const ids = new Set(page.entries.map((entry) => entry.id));
       selected = new Set([...selected].filter((id) => ids.has(id)));
       if (preview && !ids.has(preview.id)) preview = null;
-      if (view === 'treemap') void loadTree();
+      if (view === 'treemap' || view === 'sunburst' || view === 'query') void loadTree();
     } catch (cause) {
       if (token !== navToken) return;
       error = cause instanceof Error ? cause.message : String(cause);
@@ -261,7 +262,7 @@
 
   function setView(next: ViewId) {
     view = next;
-    if (next === 'treemap' || next === 'sunburst') void loadTree();
+    if (next === 'treemap' || next === 'sunburst' || next === 'query') void loadTree();
     updateHash(path);
   }
 
@@ -325,9 +326,9 @@
       }
       return;
     }
-     if (mod && ['1', '2', '3', '4'].includes(event.key)) {
+     if (mod && ['1', '2', '3', '4', '5'].includes(event.key)) {
       event.preventDefault();
-       setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : event.key === '3' ? 'mosaic' : 'sunburst');
+       setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : event.key === '3' ? 'mosaic' : event.key === '4' ? 'sunburst' : 'query');
       return;
     }
     if (event.altKey && event.key === 'ArrowLeft') {
@@ -390,7 +391,7 @@
       try {
         const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const requestedView = params.get('view');
-        if (requestedView === 'list' || requestedView === 'treemap' || requestedView === 'mosaic' || requestedView === 'sunburst') {
+        if (requestedView === 'list' || requestedView === 'treemap' || requestedView === 'mosaic' || requestedView === 'sunburst' || requestedView === 'query') {
           view = requestedView;
         }
         const requestedPath = params.get('path');
@@ -482,6 +483,13 @@
             loading={treeLoading}
             {path}
             onnavigate={(next) => void navigate(next)}
+            onopen={open}
+          />
+        {:else if view === 'query'}
+          <QueryView
+            root={tree}
+            loading={treeLoading}
+            {path}
             onopen={open}
           />
         {:else if entries.length === 0}
