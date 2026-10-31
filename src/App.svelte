@@ -10,6 +10,7 @@
   import PreviewPane from './components/PreviewPane.svelte';
   import StatusBar from './components/StatusBar.svelte';
   import QuickLook from './components/QuickLook.svelte';
+  import ContextMenu from './components/ContextMenu.svelte';
   import Icon from './components/Icon.svelte';
   import ListView from './views/ListView.svelte';
   import TreemapView from './views/TreemapView.svelte';
@@ -38,6 +39,7 @@
   let anchor = $state<string | null>(null);
   let preview = $state<Entry | null>(null);
   let quickLook = $state<Entry | null>(null);
+  let contextMenu = $state<{ x: number; y: number; entry: Entry } | null>(null);
 
   let places = $state<Place[]>([]);
   let previewOpen = $state(true);
@@ -199,6 +201,45 @@
     if (!canUp) return;
     const parent = parentOf(path);
     if (parent !== path) void navigate(parent);
+  }
+
+  async function doRename(entry: Entry) {
+    const name = window.prompt('Rename to:', entry.name);
+    if (!name || name === entry.name) return;
+    try {
+      const next = await backend.renamePath(entry.path, name);
+      await reload();
+      const found = entries.find((e) => e.path === next);
+      if (found) {
+        selected = new Set([found.id]);
+        preview = found;
+      }
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  async function doTrash(entriesToTrash: Entry[]) {
+    if (entriesToTrash.length === 0) return;
+    if (!window.confirm(`Move ${entriesToTrash.length} item(s) to trash?`)) return;
+    try {
+      await backend.trashItems(entriesToTrash.map((e) => e.path));
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  async function doMove(entriesToMove: Entry[]) {
+    if (entriesToMove.length === 0) return;
+    const dest = window.prompt('Move to folder (absolute path):');
+    if (!dest) return;
+    try {
+      await backend.moveItems(entriesToMove.map((e) => e.path), dest.trim());
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
   }
 
   function open(entry: Entry) {
@@ -381,6 +422,12 @@
         event.preventDefault();
         void reload();
         break;
+      case 'Delete':
+        if (selected.size > 0) {
+          event.preventDefault();
+          void doTrash(entries.filter((e) => selected.has(e.id)));
+        }
+        break;
       default:
         break;
     }
@@ -519,6 +566,7 @@
             {selected}
             onselect={select}
             onopen={open}
+            oncontext={(entry, e) => (contextMenu = { x: e.clientX, y: e.clientY, entry })}
             onloadmore={loadMore}
             hasmore={hasMore}
             {loadingMore}
@@ -530,6 +578,7 @@
             {tileSize}
             onselect={select}
             onopen={open}
+            oncontext={(entry, e) => (contextMenu = { x: e.clientX, y: e.clientY, entry })}
             onloadmore={loadMore}
             hasmore={hasMore}
           />
@@ -550,6 +599,18 @@
     {loading}
     mock={!isTauri}
   />
+
+  {#if contextMenu}
+    <ContextMenu
+      x={contextMenu.x}
+      y={contextMenu.y}
+      onopen={() => open(contextMenu!.entry)}
+      onrename={() => void doRename(contextMenu!.entry)}
+      ontrash={() => void doTrash([contextMenu!.entry])}
+      onmove={() => void doMove([contextMenu!.entry])}
+      onclose={() => (contextMenu = null)}
+    />
+  {/if}
 
   {#if quickLook}
     <QuickLook entry={quickLook} onclose={() => (quickLook = null)} />

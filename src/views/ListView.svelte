@@ -9,12 +9,13 @@
     selected: Set<string>;
     onselect: (entry: Entry, event: MouseEvent) => void;
     onopen: (entry: Entry) => void;
+    oncontext?: (entry: Entry, event: MouseEvent) => void;
     onloadmore: () => void;
     hasmore: boolean;
     loadingMore: boolean;
   }
 
-  let { entries, selected, onselect, onopen, onloadmore, hasmore, loadingMore }: Props = $props();
+  let { entries, selected, onselect, onopen, oncontext, onloadmore, hasmore, loadingMore }: Props = $props();
 
   const ROW = 30;
 
@@ -76,6 +77,7 @@
           style="transform: translateY({(start + index) * ROW}px)"
           onclick={(event) => onselect(entry, event)}
           ondblclick={() => onopen(entry)}
+          oncontextmenu={(event) => { event.preventDefault(); oncontext?.(entry, event); }}
           title={entry.path}
         >
           <span class="name-cell">

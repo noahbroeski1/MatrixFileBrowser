@@ -28,6 +28,9 @@ fn main() {
             commands::open_path,
             commands::preview_text,
             commands::home_dir,
+            commands::rename_path,
+            commands::move_items,
+            commands::trash_items,
             watcher::watch_start,
         ])
         .run(tauri::generate_context!())

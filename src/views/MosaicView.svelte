@@ -11,11 +11,12 @@
     tileSize: number;
     onselect: (entry: Entry, event: MouseEvent) => void;
     onopen: (entry: Entry) => void;
+    oncontext?: (entry: Entry, event: MouseEvent) => void;
     onloadmore: () => void;
     hasmore: boolean;
   }
 
-  let { entries, selected, tileSize, onselect, onopen, onloadmore, hasmore }: Props = $props();
+  let { entries, selected, tileSize, onselect, onopen, oncontext, onloadmore, hasmore }: Props = $props();
 
   let thumbs = $state<Record<string, string>>({});
   let failed = $state<Set<string>>(new Set());
@@ -68,6 +69,7 @@
         class:selected={selected.has(entry.id)}
         onclick={(event) => onselect(entry, event)}
         ondblclick={() => onopen(entry)}
+        oncontextmenu={(event) => { event.preventDefault(); oncontext?.(entry, event); }}
         title={`${entry.name} — ${entry.kind === 'dir' ? 'folder' : formatBytes(entry.size)}`}
       >
         <span class="media">

@@ -401,6 +401,77 @@ export function createMockBackend(): Backend {
       return SAMPLE_TEXT;
     },
 
+    async renamePath(path: string, newName: string): Promise<string> {
+      await delay(20);
+      const node = index.get(path);
+      if (!node) throw new Error(`Cannot rename ${path}`);
+      const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+      const newPath = parentPath === '/' ? `/${newName}` : `${parentPath}/${newName}`;
+      if (index.has(newPath)) throw new Error(`${newPath} already exists`);
+
+      const reindex = (n: Node, oldBase: string, newBase: string) => {
+        const oldPath = n.path;
+        const nextPath = oldBase === oldPath ? newBase : newBase + oldPath.slice(oldBase.length);
+        index.delete(oldPath);
+        n.name = oldBase === oldPath ? newName : n.name;
+        n.path = nextPath;
+        index.set(nextPath, n);
+        n.children?.forEach((c) => reindex(c, oldBase, newBase));
+      };
+      reindex(node, path, newPath);
+      return newPath;
+    },
+
+    async trashItems(paths: string[]): Promise<void> {
+      await delay(20);
+      for (const path of paths) {
+        const node = index.get(path);
+        if (!node) continue;
+        const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+        const parent = index.get(parentPath);
+        if (parent?.children) {
+          parent.children = parent.children.filter((c) => c !== node);
+        }
+        const remove = (n: Node) => {
+          index.delete(n.path);
+          n.children?.forEach(remove);
+        };
+        remove(node);
+      }
+    },
+
+    async moveItems(paths: string[], destDir: string): Promise<string[]> {
+      await delay(20);
+      const dest = index.get(destDir);
+      if (!dest || dest.kind !== 'dir') throw new Error(`${destDir} is not a directory`);
+      const out: string[] = [];
+      for (const path of paths) {
+        const node = index.get(path);
+        if (!node) continue;
+        const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+        const parent = index.get(parentPath);
+        if (parent?.children) {
+          parent.children = parent.children.filter((c) => c !== node);
+        }
+        const newPath = destDir === '/' ? `/${node.name}` : `${destDir}/${node.name}`;
+        if (index.has(newPath)) throw new Error(`${newPath} already exists`);
+
+        const reindex = (n: Node, oldBase: string, newBase: string) => {
+          const oldPath = n.path;
+          const nextPath = oldBase === oldPath ? newBase : newBase + oldPath.slice(oldBase.length);
+          index.delete(oldPath);
+          n.path = nextPath;
+          index.set(nextPath, n);
+          n.children?.forEach((c) => reindex(c, oldBase, newBase));
+        };
+        reindex(node, path, newPath);
+        if (!dest.children) dest.children = [];
+        dest.children.push(node);
+        out.push(newPath);
+      }
+      return out;
+    },
+
     async watchStart(_paths: string[]): Promise<void> {
       // No-op in the browser.
     },

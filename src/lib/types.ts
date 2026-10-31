@@ -76,6 +76,9 @@ export interface Backend {
   reveal(path: string): Promise<void>;
   openPath(path: string): Promise<void>;
   previewText(path: string, maxBytes: number): Promise<string>;
+  renamePath(path: string, newName: string): Promise<string>;
+  moveItems(paths: string[], destDir: string): Promise<string[]>;
+  trashItems(paths: string[]): Promise<void>;
   watchStart(paths: string[]): Promise<void>;
   onChanged(cb: (dirs: string[]) => void): Promise<() => void>;
 }

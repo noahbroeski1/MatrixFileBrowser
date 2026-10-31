@@ -38,6 +38,11 @@ const tauriBackend: Backend = {
   openPath: (path: string) => invoke<void>('open_path', { path }),
   previewText: (path: string, maxBytes: number) =>
     invoke<string>('preview_text', { path, maxBytes }),
+  renamePath: (path: string, newName: string) =>
+    invoke<string>('rename_path', { path, newName }),
+  moveItems: (paths: string[], destDir: string) =>
+    invoke<string[]>('move_items', { paths, destDir }),
+  trashItems: (paths: string[]) => invoke<void>('trash_items', { paths }),
   watchStart: (paths: string[]) => invoke<void>('watch_start', { paths }),
   onChanged: async (cb: (dirs: string[]) => void) => {
     const unlisten = await listen<string[]>('fs://changed', (event) => cb(event.payload));
