@@ -3,6 +3,7 @@
   import type { Entry, TreeStats } from '../lib/types';
   import { colorFor, type ColorMode } from '../lib/treemap';
   import { formatBytes, formatDate } from '../lib/format';
+  import EntryIcon from '../components/EntryIcon.svelte';
   import Icon from '../components/Icon.svelte';
 
   interface Props {
@@ -22,6 +23,7 @@
   let mode = $state<ColorMode>('type');
   let zoom = $state<TreeStats | null>(null);
   let hover = $state<{ node: TreeStats; x: number; y: number } | null>(null);
+  let hoverNode = $derived(hover?.node ?? null);
 
   interface Arc {
     node: TreeStats;
@@ -139,34 +141,17 @@
       ctx.stroke();
     }
 
-    // Center label (follows hover)
+    // Center disc (label rendered as HTML overlay below)
     const rootNode = displayNode ?? current;
     if (rootNode) {
-      ctx.fillStyle = 'rgba(6, 10, 14, 0.55)';
+      ctx.fillStyle = 'rgba(6, 10, 14, 0.6)';
       ctx.beginPath();
-      ctx.arc(cx, cy, ringWidth * 0.92, 0, Math.PI * 2);
+      ctx.arc(cx, cy, ringWidth * 0.88, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(240, 246, 252, 0.95)';
-      ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(fitText(ctx, rootNode.node.name, ringWidth * 1.6), cx, cy - 7);
-      ctx.fillStyle = 'rgba(200, 212, 226, 0.7)';
-      ctx.font = '10px ui-monospace, monospace';
-      ctx.fillText(formatBytes(rootNode.totalBytes), cx, cy + 9);
+      ctx.strokeStyle = 'rgba(94, 234, 212, 0.25)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
-  }
-
-  function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
-    if (ctx.measureText(text).width <= maxWidth) return text;
-    let low = 0;
-    let high = text.length;
-    while (low < high) {
-      const mid = (low + high + 1) >> 1;
-      if (ctx.measureText(`${text.slice(0, mid)}…`).width <= maxWidth) low = mid;
-      else high = mid - 1;
-    }
-    return `${text.slice(0, low)}…`;
   }
 
   function hitTest(px: number, py: number): TreeStats | null {
@@ -274,6 +259,15 @@
       onclick={onClick}
     ></canvas>
 
+    {#if (displayNode ?? current)}
+      {@const node = (displayNode ?? current)!}
+      <div class="center-label">
+        <EntryIcon entry={node.node} size={20} />
+        <span class="center-name truncate">{node.node.name}</span>
+        <span class="center-size">{formatBytes(node.totalBytes)}</span>
+      </div>
+    {/if}
+
     {#if loading}
       <div class="overlay">
         <span class="spinner"></span>
@@ -291,19 +285,19 @@
       </div>
     {/if}
 
-    {#if hover}
+    {#if hover && hoverNode}
       <div
         class="tooltip"
         style="left:{Math.min(hover.x + 14, width - 240)}px; top:{Math.min(hover.y + 14, height - 96)}px"
       >
-        <div class="tip-name truncate">{hover.node.node.name}</div>
+        <div class="tip-name truncate">{hoverNode.node.name}</div>
         <div class="tip-row">
-          <span>{formatBytes(hover.node.totalBytes)}</span>
-          <span>{hover.node.fileCount.toLocaleString()} files</span>
+          <span>{formatBytes(hoverNode.totalBytes)}</span>
+          <span>{hoverNode.fileCount.toLocaleString()} files</span>
         </div>
         <div class="tip-row muted">
-          <span>{formatDate(hover.node.newestMs)}</span>
-          <span>{hover.node.children.length > 0 ? 'click to zoom' : 'click to open'}</span>
+          <span>{formatDate(hoverNode.newestMs)}</span>
+          <span>{hoverNode.children.length > 0 ? 'click to zoom' : 'click to open'}</span>
         </div>
       </div>
     {/if}
@@ -466,5 +460,36 @@
     margin-top: 3px;
     color: var(--text-faint);
     font-size: 10.5px;
+  }
+
+  .center-label {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    max-width: 140px;
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .center-label :global(svg) {
+    color: var(--accent);
+  }
+
+  .center-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    max-width: 100%;
+  }
+
+  .center-size {
+    font-size: 10px;
+    color: var(--text-faint);
+    font-family: var(--mono);
   }
 </style>
