@@ -261,7 +261,7 @@
 
     {#if (displayNode ?? current)}
       {@const node = (displayNode ?? current)!}
-      <div class="center-label">
+      <div class="center-label" style="width:{ringWidth * 2}px; height:{ringWidth * 2}px">
         <EntryIcon entry={node.node} size={20} />
         <span class="center-name truncate">{node.node.name}</span>
         <span class="center-size">{formatBytes(node.totalBytes)}</span>
@@ -286,6 +286,7 @@
     {/if}
 
     {#if hover && hoverNode}
+      {#key hoverNode.node.id}
       <div
         class="tooltip"
         style="left:{Math.min(hover.x + 14, width - 240)}px; top:{Math.min(hover.y + 14, height - 96)}px"
@@ -300,6 +301,7 @@
           <span>{hoverNode.children.length > 0 ? 'click to zoom' : 'click to open'}</span>
         </div>
       </div>
+      {/key}
     {/if}
   </div>
 </div>
@@ -464,6 +466,9 @@
 
   .center-label {
     position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(12, 18, 28, 0.92), rgba(6, 10, 14, 0.92));
+    justify-content: center;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
