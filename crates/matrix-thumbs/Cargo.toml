@@ -1,0 +1,23 @@
+[package]
+name = "matrix-thumbs"
+description = "Thumbnail pipeline and on-disk cache for MatrixFileBrowser"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+blake3.workspace = true
+kamadak-exif = "0.6"
+image = { version = "0.25", default-features = false, features = [
+    "jpeg",
+    "png",
+    "gif",
+    "webp",
+    "bmp",
+    "tiff",
+    "ico",
+] }

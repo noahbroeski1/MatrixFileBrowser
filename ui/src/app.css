@@ -1,0 +1,135 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #0c0f13;
+  --bg-1: #11151b;
+  --bg-2: #171c24;
+  --bg-3: #1e242e;
+  --bg-4: #262d39;
+  --line: #252c37;
+  --line-soft: #1b212a;
+  --text: #e8ecf3;
+  --text-dim: #9aa4b6;
+  --text-faint: #6b7487;
+  --accent: #5eead4;
+  --accent-strong: #2dd4bf;
+  --accent-ink: #04201c;
+  --blue: #60a5fa;
+  --danger: #f87171;
+  --warn: #fbbf24;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Cantarell, sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #f6f7f9;
+    --bg-1: #ffffff;
+    --bg-2: #eef1f5;
+    --bg-3: #e4e8ee;
+    --bg-4: #d8dee7;
+    --line: #d5dbe4;
+    --line-soft: #e6eaf0;
+    --text: #17202c;
+    --text-dim: #55627a;
+    --text-faint: #7d8798;
+    --accent: #0f9d8a;
+    --accent-strong: #0b7f70;
+    --accent-ink: #ffffff;
+    --shadow: 0 12px 34px rgba(15, 23, 42, 0.16);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 var(--font);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: rgba(94, 234, 212, 0.28);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-4);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  color: var(--text-dim);
+  background: var(--bg-2);
+}

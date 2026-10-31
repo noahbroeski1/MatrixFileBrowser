@@ -1,0 +1,20 @@
+[package]
+name = "matrix-file-browser"
+description = "A richly featured FOSS file browser for Linux"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+serde.workspace = true
+serde_json.workspace = true
+matrix-core = { path = "../crates/matrix-core" }
+matrix-thumbs = { path = "../crates/matrix-thumbs" }
+matrix-aggregate = { path = "../crates/matrix-aggregate" }
+notify = "6.1"

@@ -1,0 +1,15 @@
+# Build artifacts
+/target
+/src-tauri/target
+/src-tauri/gen
+
+# Frontend
+/ui/node_modules
+/ui/dist
+/ui/.vite
+
+# Local
+*.log
+.DS_Store
+.env
+.env.local
