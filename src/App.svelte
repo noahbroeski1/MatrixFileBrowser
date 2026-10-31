@@ -25,6 +25,7 @@
   let total = $state(0);
   let nextOffset = $state<number | null>(null);
   let loading = $state(true);
+  let booting = $state(true);
   let loadingMore = $state(false);
   let error = $state<string | null>(null);
 
@@ -456,6 +457,7 @@
       } catch (cause) {
         error = cause instanceof Error ? cause.message : String(cause);
         loading = false;
+        booting = false;
       }
     })();
 
@@ -468,6 +470,13 @@
 </script>
 
 <div class="app">
+  {#if booting}
+    <div class="boot-overlay">
+      <div class="boot-logo">Matrix</div>
+      <span class="spinner"></span>
+      <p>Indexing your files…</p>
+    </div>
+  {/if}
   <Toolbar
     {path}
     bind:filter
@@ -690,5 +699,34 @@
     to {
       transform: rotate(360deg);
     }
+  }
+
+  .boot-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .boot-logo {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .boot-overlay p {
+    margin: 0;
+    color: var(--text-faint);
+    font-size: 12.5px;
   }
 </style>

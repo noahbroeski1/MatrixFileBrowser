@@ -9,6 +9,8 @@
 
   let thumb = $state<string | null>(null);
   let text = $state<string | null>(null);
+  const AUDIO_EXT = new Set(['mp3', 'wav', 'ogg', 'oga', 'flac', 'm4a', 'aac', 'opus', 'wma']);
+  const isAudio = (ext: string | null) => !!ext && AUDIO_EXT.has(ext);
 
   $effect(() => {
     const current = entry;
@@ -61,7 +63,14 @@
     </header>
 
     <div class="stage">
-      {#if thumb}
+      {#if isAudio(entry.ext)}
+        <div class="audio-stage">
+          <Icon name="music" size={64} />
+          <audio src={assetUrl(entry.path)} controls autoplay preload="metadata"></audio>
+        </div>
+      {:else if isVideo(entry.ext)}
+        <video src={assetUrl(entry.path)} controls autoplay preload="metadata" poster={thumb ?? undefined}><track kind="captions" /></video>
+      {:else if thumb}
         <img src={thumb} alt={entry.name} />
       {:else if text}
         <pre>{text}</pre>
@@ -158,11 +167,25 @@
     background-image: radial-gradient(circle at 50% 0%, rgba(94, 234, 212, 0.05), transparent 60%);
   }
 
-  .stage img {
+  .stage img,
+  .stage video {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
     border-radius: 8px;
+  }
+
+  .audio-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: min(480px, 80%);
+    color: var(--text-faint);
+  }
+
+  .audio-stage audio {
+    width: 100%;
   }
 
   .stage pre {

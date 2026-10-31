@@ -31,6 +31,7 @@
   }
 
   let current = $derived(zoom ?? root);
+  let displayNode = $derived(hover ? hover.node : current);
 
   // Reset zoom whenever the browsed directory changes.
   $effect(() => {
@@ -138,8 +139,8 @@
       ctx.stroke();
     }
 
-    // Center label
-    const rootNode = current;
+    // Center label (follows hover)
+    const rootNode = displayNode ?? current;
     if (rootNode) {
       ctx.fillStyle = 'rgba(6, 10, 14, 0.55)';
       ctx.beginPath();
