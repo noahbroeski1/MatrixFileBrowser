@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "rust-lang.rust-analyzer",
+    "vadimcn.vscode-lldb",
+    "svelte.svelte-vscode",
+    "tauri-apps.tauri-vscode",
+    "tamasfe.even-better-toml",
+    "serayuzgur.crates"
+  ]
+}

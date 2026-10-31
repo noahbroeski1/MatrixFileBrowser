@@ -18,3 +18,9 @@ matrix-core = { path = "../crates/matrix-core" }
 matrix-thumbs = { path = "../crates/matrix-thumbs" }
 matrix-aggregate = { path = "../crates/matrix-aggregate" }
 notify = "6.1"
+
+[features]
+# Used by `tauri build`: embeds the frontend assets instead of hitting the dev
+# server. The Tauri CLI adds `--features custom-protocol` on build and
+# `--no-default-features` on dev, so do not remove this.
+custom-protocol = ["tauri/custom-protocol"]
