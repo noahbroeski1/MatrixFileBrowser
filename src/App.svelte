@@ -17,6 +17,7 @@
   import SunburstView from './views/SunburstView.svelte';
   import QueryView from './views/QueryView.svelte';
   import ClustersView from './views/ClustersView.svelte';
+  import PalaceView from './views/PalaceView.svelte';
 
   let path = $state('');
   let entries = $state<Entry[]>([]);
@@ -106,7 +107,7 @@
       tree = null;
 
       if (push) pushHistory(page.path);
-      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters') void loadTree();
+      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters' || view === 'palace') void loadTree();
       if (isTauri) backend.watchStart([page.path]).catch(() => {});
       updateHash(page.path);
     } catch (cause) {
@@ -146,7 +147,7 @@
       const ids = new Set(page.entries.map((entry) => entry.id));
       selected = new Set([...selected].filter((id) => ids.has(id)));
       if (preview && !ids.has(preview.id)) preview = null;
-      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters') void loadTree();
+      if (view === 'treemap' || view === 'sunburst' || view === 'query' || view === 'clusters' || view === 'palace') void loadTree();
     } catch (cause) {
       if (token !== navToken) return;
       error = cause instanceof Error ? cause.message : String(cause);
@@ -263,7 +264,7 @@
 
   function setView(next: ViewId) {
     view = next;
-    if (next === 'treemap' || next === 'sunburst' || next === 'query' || next === 'clusters') void loadTree();
+    if (next === 'treemap' || next === 'sunburst' || next === 'query' || next === 'clusters' || next === 'palace') void loadTree();
     updateHash(path);
   }
 
@@ -327,9 +328,9 @@
       }
       return;
     }
-     if (mod && ['1', '2', '3', '4', '5', '6'].includes(event.key)) {
+     if (mod && ['1', '2', '3', '4', '5', '6', '7'].includes(event.key)) {
       event.preventDefault();
-       setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : event.key === '3' ? 'mosaic' : event.key === '4' ? 'sunburst' : event.key === '5' ? 'query' : 'clusters');
+       setView(event.key === '1' ? 'list' : event.key === '2' ? 'treemap' : event.key === '3' ? 'mosaic' : event.key === '4' ? 'sunburst' : event.key === '5' ? 'query' : event.key === '6' ? 'clusters' : 'palace');
       return;
     }
     if (event.altKey && event.key === 'ArrowLeft') {
@@ -392,7 +393,7 @@
       try {
         const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const requestedView = params.get('view');
-        if (requestedView === 'list' || requestedView === 'treemap' || requestedView === 'mosaic' || requestedView === 'sunburst' || requestedView === 'query' || requestedView === 'clusters') {
+        if (requestedView === 'list' || requestedView === 'treemap' || requestedView === 'mosaic' || requestedView === 'sunburst' || requestedView === 'query' || requestedView === 'clusters' || requestedView === 'palace') {
           view = requestedView;
         }
         const requestedPath = params.get('path');
@@ -498,6 +499,13 @@
             root={tree}
             loading={treeLoading}
             {path}
+            onopen={open}
+          />
+        {:else if view === 'palace'}
+          <PalaceView
+            root={tree}
+            loading={treeLoading}
+            onnavigate={(next) => void navigate(next)}
             onopen={open}
           />
         {:else if entries.length === 0}

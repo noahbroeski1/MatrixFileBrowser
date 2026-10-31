@@ -171,6 +171,9 @@
     <button class:active={view === 'clusters'} onclick={() => onview('clusters')} title="Clusters (Ctrl+6)">
       <Icon name="sparkles" size={15} />
     </button>
+    <button class:active={view === 'palace'} onclick={() => onview('palace')} title="Memory palace (Ctrl+7)">
+      <Icon name="cube" size={15} />
+    </button>
   </div>
 
   <button

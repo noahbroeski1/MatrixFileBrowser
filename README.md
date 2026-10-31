@@ -34,7 +34,7 @@ Working:
 - Debounced filesystem watching that refreshes the open folder
 - Keyboard-first operation, dark and light themes, deep-linkable view state
 
-Not built yet: the 3D memory palace and any file mutation. The app never
+Not built yet: file mutation (rename, move, trash, batch). The app never
 writes to your files.
 
 ## Architecture
@@ -128,7 +128,7 @@ npm run check && npm run build
 | --- | --- |
 | `Ctrl+L` | Edit location |
 | `Ctrl+F` | Focus filter |
-| `Ctrl+1` / `2` / `3` / `4` / `5` / `6` | List / Treemap / Mosaic / Sunburst / Query / Clusters |
+| `Ctrl+1` / `2` / `3` / `4` / `5` / `6` / `7` | List / Treemap / Mosaic / Sunburst / Query / Clusters / Palace |
 | `Alt+←` / `Alt+→` | Back / Forward |
 | `Backspace` | Parent folder |
 | `↑` / `↓` | Move selection |
@@ -154,7 +154,7 @@ View state lives in the URL hash, so a folder and a view can be linked:
 | **M1** | Read-only browser + treemap + mosaic views | ✅ Complete |
 | **M2** | Sunburst / radial tree, query & metadata workbench | ✅ Complete |
 | **M3** | Semantic clusters (name/type/size) | ✅ Complete |
-| **M4** | 3D memory palace (spatial, persistent layout) | ⏳ Planned |
+| **M4** | 3D memory palace (orbitable spatial view) | ✅ Complete |
 | **M5** | File operations (rename, move, trash, batch), Flatpak + AppImage packaging | ⏳ Planned |
 | **Later** | Archives and MTP/SFTP through the `Vfs` trait, plugin API for third-party views | ⏳ Planned |
 
