@@ -18,6 +18,8 @@ matrix-core = { path = "../crates/matrix-core" }
 matrix-thumbs = { path = "../crates/matrix-thumbs" }
 matrix-aggregate = { path = "../crates/matrix-aggregate" }
 notify = "6.1"
+tauri-plugin-dialog = "2.0.0-rc.8"
+tauri-plugin-fs = "2.0.0-rc.6"
 
 [features]
 # Used by `tauri build`: embeds the frontend assets instead of hitting the dev

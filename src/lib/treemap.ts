@@ -127,29 +127,65 @@ const KNOWN_HUES: Record<string, number> = {
   html: 18,
 };
 
-export function colorFor(entry: Entry, mode: ColorMode, ageMs = entry.mtimeMs): string {
+export interface SunburstPalette {
+  dirHueStart: number;
+  dirHueEnd: number;
+  dirSat: number;
+  dirLight: number;
+  fileSat: number;
+  fileLight: number;
+  ageHueStart: number;
+  ageHueEnd: number;
+  sizeHueStart: number;
+  sizeHueEnd: number;
+}
+
+export const DEFAULT_PALETTE: SunburstPalette = {
+  dirHueStart: 150,
+  dirHueEnd: 260,
+  dirSat: 46,
+  dirLight: 38,
+  fileSat: 48,
+  fileLight: 40,
+  ageHueStart: 162,
+  ageHueEnd: 278,
+  sizeHueStart: 168,
+  sizeHueEnd: 210,
+};
+
+export function colorFor(entry: Entry, mode: ColorMode, ageMs = entry.mtimeMs, palette: SunburstPalette = DEFAULT_PALETTE): string {
   if (mode === 'age') {
     const days = Math.min(1095, Math.max(0, (Date.now() - ageMs) / 86_400_000));
     const t = days / 1095;
-    const hue = 162 + t * 116;
+    const hue = palette.ageHueStart + t * (palette.ageHueEnd - palette.ageHueStart);
     return `hsl(${hue} 52% ${40 - t * 8}%)`;
   }
 
   if (mode === 'size') {
     const t = Math.min(1, Math.log10(Math.max(1, entry.size)) / 10);
-    const hue = 168 + t * 42;
+    const hue = palette.sizeHueStart + t * (palette.sizeHueEnd - palette.sizeHueStart);
     return `hsl(${hue} 58% ${34 + t * 18}%)`;
   }
 
   const key = entry.kind === 'dir' ? `dir:${entry.name}` : entry.ext ?? 'file';
   if (entry.kind === 'dir') {
-    // Folders stay in a cohesive teal → indigo band so the map reads as one
-    // surface while neighbouring folders remain distinguishable.
-    const hue = 150 + (hashString(key) % 110);
-    return `hsl(${hue} 46% 38%)`;
+    const hue = palette.dirHueStart + (hashString(key) % (palette.dirHueEnd - palette.dirHueStart));
+    return `hsl(${hue} ${palette.dirSat}% ${palette.dirLight}%)`;
   }
   const hue = KNOWN_HUES[key] ?? hashString(key) % 360;
-  return `hsl(${hue} 48% 40%)`;
+  return `hsl(${hue} ${palette.fileSat}% ${palette.fileLight}%)`;
+}
+
+export function loadPalette(): SunburstPalette {
+  try {
+    const raw = localStorage.getItem('matrix-sunburst-palette');
+    if (raw) return { ...DEFAULT_PALETTE, ...JSON.parse(raw) };
+  } catch {}
+  return { ...DEFAULT_PALETTE };
+}
+
+export function savePalette(p: SunburstPalette) {
+  try { localStorage.setItem('matrix-sunburst-palette', JSON.stringify(p)); } catch {}
 }
 
 export function withAlpha(color: string, alpha: number): string {

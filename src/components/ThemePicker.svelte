@@ -1,15 +1,17 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  import { THEMES } from '../lib/themes';
+  import { allThemes } from '../lib/themes';
 
   interface Props {
     current: string;
     onchange: (id: string) => void;
+    oncreate: () => void;
   }
 
-  let { current, onchange }: Props = $props();
+  let { current, onchange, oncreate }: Props = $props();
 
   let open = $state(false);
+  let themes = $derived(allThemes());
 </script>
 
 <div class="theme-picker">
@@ -21,7 +23,7 @@
   </button>
   {#if open}
     <div class="menu">
-      {#each THEMES as theme (theme.id)}
+      {#each themes as theme (theme.id)}
         <button
           class="item"
           class:active={theme.id === current}
@@ -31,6 +33,11 @@
           <span>{theme.name}</span>
         </button>
       {/each}
+      <div class="divider"></div>
+      <button class="item create" onclick={() => { oncreate(); open = false; }}>
+        <span class="swatch plus">+</span>
+        <span>Create Custom Theme…</span>
+      </button>
     </div>
   {/if}
 </div>
@@ -90,5 +97,19 @@
     border-radius: 4px;
     border: 1px solid var(--line);
     flex: none;
+  }
+  .divider {
+    height: 1px;
+    background: var(--line-soft);
+    margin: 4px 0;
+  }
+  .plus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--bg-3);
   }
 </style>

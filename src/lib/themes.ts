@@ -115,8 +115,24 @@ export const THEMES: Theme[] = [
 
 export const DEFAULT_THEME_ID = 'dark';
 
+export function loadCustomThemes(): Theme[] {
+  try {
+    const raw = localStorage.getItem('matrix-custom-themes');
+    if (raw) return JSON.parse(raw) as Theme[];
+  } catch {}
+  return [];
+}
+
+export function saveCustomThemes(themes: Theme[]) {
+  try { localStorage.setItem('matrix-custom-themes', JSON.stringify(themes)); } catch {}
+}
+
+export function allThemes(): Theme[] {
+  return [...THEMES, ...loadCustomThemes()];
+}
+
 export function getTheme(id: string): Theme {
-  return THEMES.find((t) => t.id === id) ?? THEMES[0];
+  return allThemes().find((t) => t.id === id) ?? THEMES[0];
 }
 
 export function applyTheme(theme: Theme) {

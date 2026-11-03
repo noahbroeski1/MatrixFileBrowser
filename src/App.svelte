@@ -13,6 +13,7 @@
   import ContextMenu from './components/ContextMenu.svelte';
   import Icon from './components/Icon.svelte';
   import ThemePicker from './components/ThemePicker.svelte';
+  import ThemeEditor from './components/ThemeEditor.svelte';
   import { getTheme, applyTheme, loadSavedThemeId, saveThemeId } from './lib/themes';
   import ListView from './views/ListView.svelte';
   import TreemapView from './views/TreemapView.svelte';
@@ -47,6 +48,7 @@
   let previewOpen = $state(true);
   let tileSize = $state(168);
   let themeId = $state(loadSavedThemeId());
+  let themeEditorOpen = $state(false);
 
   let tree = $state<TreeStats | null>(null);
   let treeLoading = $state(false);
@@ -327,6 +329,12 @@
   }
 
   function setTheme(id: string) {
+    themeId = id;
+    saveThemeId(id);
+    applyTheme(getTheme(id));
+  }
+
+  function onThemeCreated(id: string) {
     themeId = id;
     saveThemeId(id);
     applyTheme(getTheme(id));
@@ -620,8 +628,10 @@
   </div>
 
   <div class="theme-float">
-    <ThemePicker current={themeId} onchange={setTheme} />
+    <ThemePicker current={themeId} onchange={setTheme} oncreate={() => (themeEditorOpen = true)} />
   </div>
+
+  <ThemeEditor open={themeEditorOpen} themeId={themeId} onclose={() => (themeEditorOpen = false)} onsaved={onThemeCreated} />
 
   <StatusBar
     {total}

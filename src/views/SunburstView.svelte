@@ -1,7 +1,7 @@
 <script lang="ts">
   // SPDX-License-Identifier: GPL-3.0-or-later
   import type { Entry, TreeStats } from '../lib/types';
-  import { colorFor, type ColorMode } from '../lib/treemap';
+  import { colorFor, type ColorMode, type SunburstPalette, loadPalette } from '../lib/treemap';
   import { formatBytes, formatDate } from '../lib/format';
   import EntryIcon from '../components/EntryIcon.svelte';
   import Icon from '../components/Icon.svelte';
@@ -24,6 +24,7 @@
   let zoom = $state<TreeStats | null>(null);
   let hover = $state<{ node: TreeStats; x: number; y: number } | null>(null);
   let hoverNode = $derived(hover?.node ?? null);
+  let palette = $state<SunburstPalette>(loadPalette());
 
   interface Arc {
     node: TreeStats;
@@ -115,6 +116,7 @@
     void hover;
     void width;
     void height;
+    void palette;
     draw();
   });
 
@@ -147,7 +149,7 @@
       if (inner > 0) ctx.arc(cx, cy, inner, e, s, true);
       ctx.closePath();
 
-      ctx.fillStyle = colorFor(arc.node.node, mode, arc.node.newestMs);
+      ctx.fillStyle = colorFor(arc.node.node, mode, arc.node.newestMs, palette);
       ctx.fill();
 
       if (hover && hover.node === arc.node) {
