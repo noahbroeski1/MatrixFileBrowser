@@ -228,6 +228,8 @@
     if (node.children.length > 0) {
       zoom = node;
       hover = null;
+      // Redraw with the selected node as the new root
+      requestAnimationFrame(() => draw());
     } else if (node.node.kind === 'dir') {
       onnavigate(node.node.path);
     } else {
