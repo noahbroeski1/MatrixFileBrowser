@@ -133,6 +133,7 @@
     const cy = height / 2;
 
     for (const arc of arcs) {
+      if (arc.depth === 0) continue; // center handled by shadow disc below
       const inner = arc.depth * ringWidth;
       const outer = (arc.depth + 1) * ringWidth;
       if (outer <= 0 || arc.end - arc.start < 0.001) continue;
@@ -159,16 +160,13 @@
       ctx.stroke();
     }
 
-    // Center disc (label rendered as HTML overlay below)
+// Center disc (label rendered as HTML overlay below)
     const rootNode = displayNode ?? current;
     if (rootNode) {
       ctx.fillStyle = 'rgba(6, 10, 14, 0.6)';
       ctx.beginPath();
-      ctx.arc(cx, cy, ringWidth * 0.88, 0, Math.PI * 2);
+      ctx.arc(cx, cy, ringWidth, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(94, 234, 212, 0.25)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
   }
 
@@ -485,7 +483,6 @@
   .center-label {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(12, 18, 28, 0.92), rgba(6, 10, 14, 0.92));
     justify-content: center;
     left: 50%;
     top: 50%;
@@ -497,6 +494,7 @@
     max-width: 140px;
     pointer-events: none;
     text-align: center;
+    background: transparent;
   }
 
   .center-label :global(svg) {

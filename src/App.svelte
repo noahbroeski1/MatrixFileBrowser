@@ -12,6 +12,8 @@
   import QuickLook from './components/QuickLook.svelte';
   import ContextMenu from './components/ContextMenu.svelte';
   import Icon from './components/Icon.svelte';
+  import ThemePicker from './components/ThemePicker.svelte';
+  import { getTheme, applyTheme, loadSavedThemeId, saveThemeId } from './lib/themes';
   import ListView from './views/ListView.svelte';
   import TreemapView from './views/TreemapView.svelte';
   import MosaicView from './views/MosaicView.svelte';
@@ -44,6 +46,7 @@
   let places = $state<Place[]>([]);
   let previewOpen = $state(true);
   let tileSize = $state(168);
+  let themeId = $state(loadSavedThemeId());
 
   let tree = $state<TreeStats | null>(null);
   let treeLoading = $state(false);
@@ -323,6 +326,12 @@
     void fetchTree(path);
   }
 
+  function setTheme(id: string) {
+    themeId = id;
+    saveThemeId(id);
+    applyTheme(getTheme(id));
+  }
+
   function setView(next: ViewId) {
     view = next;
     if (next === 'treemap' || next === 'sunburst' || next === 'query' || next === 'clusters' || next === 'palace') void loadTree();
@@ -454,6 +463,7 @@
   }
 
   onMount(() => {
+    applyTheme(getTheme(themeId));
     let unlisten: (() => void) | null = null;
 
     void (async () => {
@@ -609,6 +619,10 @@
     {/if}
   </div>
 
+  <div class="theme-float">
+    <ThemePicker current={themeId} onchange={setTheme} />
+  </div>
+
   <StatusBar
     {total}
     shown={entries.length}
@@ -688,6 +702,13 @@
     border: 1px solid var(--line);
     color: var(--text-dim);
     font-size: 11.5px;
+  }
+
+  .theme-float {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    z-index: 100;
   }
 
   .state button:hover {
