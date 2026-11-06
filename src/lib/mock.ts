@@ -396,6 +396,43 @@ export function createMockBackend(): Backend {
       console.info('[mock] open', path);
     },
 
+    async openWith(path: string, app: string): Promise<void> {
+      console.info('[mock] openWith', app, path);
+    },
+
+    async createFile(path: string): Promise<string> {
+      await delay(20);
+      const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+      const parent = index.get(parentPath);
+      if (!parent || parent.kind !== 'dir') throw new Error(`${parentPath} is not a directory`);
+      if (index.has(path)) throw new Error(`${path} already exists`);
+      const name = path.substring(path.lastIndexOf('/') + 1);
+      const node: Node = { name, path, kind: 'file', size: 0, mtime: Date.now() };
+      index.set(path, node);
+      if (!parent.children) parent.children = [];
+      parent.children.push(node);
+      return path;
+    },
+
+    async createDir(path: string): Promise<string> {
+      await delay(20);
+      const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+      const parent = index.get(parentPath);
+      if (!parent || parent.kind !== 'dir') throw new Error(`${parentPath} is not a directory`);
+      if (index.has(path)) throw new Error(`${path} already exists`);
+      const name = path.substring(path.lastIndexOf('/') + 1);
+      const node: Node = { name, path, kind: 'dir', size: 0, mtime: Date.now(), children: [] };
+      index.set(path, node);
+      if (!parent.children) parent.children = [];
+      parent.children.push(node);
+      return path;
+    },
+
+    async restoreItems(_paths: string[]): Promise<void> {
+      await delay(20);
+      console.info('[mock] restore', _paths);
+    },
+
     async previewText(_path: string, _maxBytes: number): Promise<string> {
       await delay(20);
       return SAMPLE_TEXT;
@@ -470,6 +507,37 @@ export function createMockBackend(): Backend {
         out.push(newPath);
       }
       return out;
+    },
+
+    async copyItems(paths: string[], destDir: string): Promise<string[]> {
+      await delay(20);
+      const dest = index.get(destDir);
+      if (!dest || dest.kind !== 'dir') throw new Error(`${destDir} is not a directory`);
+      const out: string[] = [];
+      for (const path of paths) {
+        const node = index.get(path);
+        if (!node) continue;
+        let newPath = destDir === '/' ? `/${node.name}` : `${destDir}/${node.name}`;
+        if (index.has(newPath)) {
+          const stem = node.name.includes('.') ? node.name.substring(0, node.name.lastIndexOf('.')) : node.name;
+          const ext = node.name.includes('.') ? node.name.substring(node.name.lastIndexOf('.')) : '';
+          let i = 1;
+          while (index.has(`${destDir === '/' ? '/' : destDir + '/'}${stem}-${i}${ext}`)) i += 1;
+          newPath = `${destDir === '/' ? '/' : destDir + '/'}${stem}-${i}${ext}`;
+        }
+        // shallow copy node
+        const clone: Node = { ...node, name: newPath.substring(newPath.lastIndexOf('/') + 1), path: newPath, children: node.children ? [...node.children] : undefined };
+        index.set(newPath, clone);
+        if (!dest.children) dest.children = [];
+        dest.children.push(clone);
+        out.push(newPath);
+      }
+      return out;
+    },
+
+    async emptyTrash(): Promise<void> {
+      await delay(20);
+      console.info('[mock] empty trash');
     },
 
     async watchStart(_paths: string[]): Promise<void> {

@@ -36,13 +36,20 @@ const tauriBackend: Backend = {
   homeDir: () => invoke<string>('home_dir'),
   reveal: (path: string) => invoke<void>('reveal', { path }),
   openPath: (path: string) => invoke<void>('open_path', { path }),
+  openWith: (path: string, app: string) => invoke<void>('open_with', { path, app }),
+  createFile: (path: string) => invoke<string>('create_file', { path }),
+  createDir: (path: string) => invoke<string>('create_dir', { path }),
   previewText: (path: string, maxBytes: number) =>
     invoke<string>('preview_text', { path, maxBytes }),
   renamePath: (path: string, newName: string) =>
     invoke<string>('rename_path', { path, newName }),
   moveItems: (paths: string[], destDir: string) =>
     invoke<string[]>('move_items', { paths, destDir }),
+  copyItems: (paths: string[], destDir: string) =>
+    invoke<string[]>('copy_items', { paths, destDir }),
   trashItems: (paths: string[]) => invoke<void>('trash_items', { paths }),
+  restoreItems: (paths: string[]) => invoke<void>('restore_items', { paths }),
+  emptyTrash: () => invoke<void>('empty_trash'),
   watchStart: (paths: string[]) => invoke<void>('watch_start', { paths }),
   onChanged: async (cb: (dirs: string[]) => void) => {
     const unlisten = await listen<string[]>('fs://changed', (event) => cb(event.payload));

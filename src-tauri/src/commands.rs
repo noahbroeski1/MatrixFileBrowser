@@ -22,6 +22,7 @@ fn sort_key(name: &str) -> SortKey {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub fn list_dir(
     path: String,
@@ -276,4 +277,133 @@ fn days_to_ymd(mut days: u64) -> (u64, u64, u64) {
 
 fn is_leap(y: u64) -> bool {
     (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)
+}
+
+#[tauri::command]
+pub fn open_with(path: String, app: String) -> Result<(), String> {
+    Command::new(&app)
+        .arg(&path)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn create_file(path: String) -> Result<String, String> {
+    let p = std::path::Path::new(&path);
+    if p.exists() {
+        return Err(format!("{} already exists", path));
+    }
+    if let Some(parent) = p.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::File::create(p).map_err(|e| e.to_string())?;
+    Ok(path)
+}
+
+#[tauri::command]
+pub fn create_dir(path: String) -> Result<String, String> {
+    let p = std::path::Path::new(&path);
+    if p.exists() {
+        return Err(format!("{} already exists", path));
+    }
+    std::fs::create_dir_all(p).map_err(|e| e.to_string())?;
+    Ok(path)
+}
+
+#[tauri::command]
+pub fn restore_items(paths: Vec<String>) -> Result<(), String> {
+    let data_home = std::env::var_os("XDG_DATA_HOME")
+        .map(std::path::PathBuf::from)
+        .filter(|p| p.is_absolute())
+        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share")))
+        .ok_or_else(|| "no data home".to_string())?;
+    let trash_files = data_home.join("Trash").join("files");
+    let trash_info = data_home.join("Trash").join("info");
+
+    for trashed in paths {
+        let name = std::path::Path::new(&trashed)
+            .file_name()
+            .ok_or_else(|| format!("bad path {trashed}"))?
+            .to_string_lossy()
+            .into_owned();
+        let info_path = trash_info.join(format!("{name}.trashinfo"));
+        let info = std::fs::read_to_string(&info_path).map_err(|e| e.to_string())?;
+        let original = info
+            .lines()
+            .find_map(|l| l.strip_prefix("Path="))
+            .ok_or_else(|| "missing Path in trashinfo".to_string())?
+            .to_string();
+        let src = trash_files.join(&name);
+        let dest = std::path::Path::new(&original);
+        if let Some(parent) = dest.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        std::fs::rename(&src, dest).map_err(|e| e.to_string())?;
+        let _ = std::fs::remove_file(&info_path);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn copy_items(paths: Vec<String>, dest_dir: String) -> Result<Vec<String>, String> {
+    let dest = std::path::Path::new(&dest_dir);
+    if !dest.is_dir() {
+        return Err(format!("{} is not a directory", dest_dir));
+    }
+    let mut out = Vec::new();
+    for path in paths {
+        let src = std::path::Path::new(&path);
+        let name = src.file_name().ok_or_else(|| format!("bad path {path}"))?;
+        let stem = src.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+        let ext = src.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+        let mut target = dest.join(name);
+        if target.exists() {
+            let mut i = 1;
+            loop {
+                let candidate = dest.join(format!("{stem}-{i}{ext}"));
+                if !candidate.exists() {
+                    target = candidate;
+                    break;
+                }
+                i += 1;
+            }
+        }
+        if src.is_dir() {
+            copy_dir_recursive(src, &target)?;
+        } else {
+            std::fs::copy(src, &target).map_err(|e| e.to_string())?;
+        }
+        out.push(target.to_string_lossy().into_owned());
+    }
+    Ok(out)
+}
+
+#[tauri::command]
+pub fn empty_trash() -> Result<(), String> {
+    let data_home = std::env::var_os("XDG_DATA_HOME")
+        .map(std::path::PathBuf::from)
+        .filter(|p| p.is_absolute())
+        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share")))
+        .ok_or_else(|| "no data home".to_string())?;
+    let trash_files = data_home.join("Trash").join("files");
+    let trash_info = data_home.join("Trash").join("info");
+    if trash_files.exists() {
+        for entry in std::fs::read_dir(&trash_files).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let p = entry.path();
+            if p.is_dir() {
+                let _ = std::fs::remove_dir_all(&p);
+            } else {
+                let _ = std::fs::remove_file(&p);
+            }
+        }
+    }
+    if trash_info.exists() {
+        for entry in std::fs::read_dir(&trash_info).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let _ = std::fs::remove_file(entry.path());
+        }
+    }
+    Ok(())
 }

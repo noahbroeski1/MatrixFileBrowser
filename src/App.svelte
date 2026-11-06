@@ -42,7 +42,7 @@
   let anchor = $state<string | null>(null);
   let preview = $state<Entry | null>(null);
   let quickLook = $state<Entry | null>(null);
-  let contextMenu = $state<{ x: number; y: number; entry: Entry } | null>(null);
+  let contextMenu = $state<{ x: number; y: number; entry: Entry | null } | null>(null);
 
   let places = $state<Place[]>([]);
   let previewOpen = $state(true);
@@ -236,6 +236,94 @@
     }
   }
 
+  async function doOpenWith(entry: Entry) {
+    const app = window.prompt('Open with (app name or path):', '');
+    if (!app) return;
+    try {
+      await backend.openWith(entry.path, app.trim());
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  async function doCreateFile(dir: string) {
+    const name = window.prompt('New file name:');
+    if (!name) return;
+    const p = dir.endsWith('/') ? `${dir}${name}` : `${dir}/${name}`;
+    try {
+      await backend.createFile(p);
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  async function doCopy(entry: Entry) {
+    const dest = window.prompt('Copy to folder (absolute path):', path);
+    if (!dest) return;
+    try {
+      await backend.copyItems([entry.path], dest.trim());
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  async function doDuplicate(entry: Entry) {
+    try {
+      await backend.copyItems([entry.path], path);
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  function doSelectAll() {
+    selected = new Set(entries.map((e) => e.id));
+  }
+
+  function doProperties(entry: Entry) {
+    window.alert(`Name: ${entry.name}\nPath: ${entry.path}\nKind: ${entry.kind}\nSize: ${entry.size}\nModified: ${new Date(entry.mtimeMs).toLocaleString()}\nMode: ${entry.mode.toString(8)}`);
+  }
+  async function doCreateFolder(dir: string) {
+    const name = window.prompt('New folder name:');
+    if (!name) return;
+    const p = dir.endsWith('/') ? `${dir}${name}` : `${dir}/${name}`;
+    try {
+      await backend.createDir(p);
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  // Simple undo/redo stacks storing reverse operations.
+  type UndoOp = () => Promise<void>;
+  let undoStack = $state<UndoOp[]>([]);
+  let clipboard = $state<string[]>([]);
+  let redoStack = $state<UndoOp[]>([]);
+
+  async function doUndo() {
+    const op = undoStack.pop();
+    if (!op) return;
+    try {
+      await op();
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  async function doRedo() {
+    const op = redoStack.pop();
+    if (!op) return;
+    try {
+      await op();
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
   async function doMove(entriesToMove: Entry[]) {
     if (entriesToMove.length === 0) return;
     const dest = window.prompt('Move to folder (absolute path):');
@@ -387,9 +475,32 @@
 
     const mod = event.ctrlKey || event.metaKey;
 
+    if (mod && event.key.toLowerCase() === 'c') {
+      event.preventDefault();
+      clipboard = entries.filter((e) => selected.has(e.id)).map((e) => e.path);
+      return;
+    }
+    if (mod && event.key.toLowerCase() === 'v') {
+      event.preventDefault();
+      if (clipboard.length === 0) return;
+      void (async () => {
+        try {
+          await backend.copyItems(clipboard, path);
+          await reload();
+        } catch (cause) {
+          error = cause instanceof Error ? cause.message : String(cause);
+        }
+      })();
+      return;
+    }
     if (mod && event.key.toLowerCase() === 'l') {
       event.preventDefault();
       locationFocus += 1;
+      return;
+    }
+    if (mod && event.key.toLowerCase() === 'a') {
+      event.preventDefault();
+      doSelectAll();
       return;
     }
     if (mod && event.key.toLowerCase() === 'f') {
@@ -544,7 +655,7 @@
         ontile={(size) => (tileSize = size)}
       />
 
-      <div class="view">
+      <div class="view" role="menu" tabindex="-1" oncontextmenu={(e) => { e.preventDefault(); contextMenu = { x: e.clientX, y: e.clientY, entry: null }; }}>
         {#if error}
           <div class="state">
             <Icon name="alert" size={24} />
@@ -646,10 +757,22 @@
     <ContextMenu
       x={contextMenu.x}
       y={contextMenu.y}
-      onopen={() => open(contextMenu!.entry)}
-      onrename={() => void doRename(contextMenu!.entry)}
-      ontrash={() => void doTrash([contextMenu!.entry])}
-      onmove={() => void doMove([contextMenu!.entry])}
+      entry={contextMenu.entry}
+      canUndo={undoStack.length > 0}
+      canRedo={redoStack.length > 0}
+      onopen={() => contextMenu?.entry && open(contextMenu.entry)}
+      onopenwith={() => contextMenu?.entry && void doOpenWith(contextMenu.entry)}
+      onrename={() => contextMenu?.entry && void doRename(contextMenu.entry)}
+      ontrash={() => contextMenu?.entry && void doTrash([contextMenu.entry])}
+      onmove={() => contextMenu?.entry && void doMove([contextMenu.entry])}
+      oncopy={() => contextMenu?.entry && void doCopy(contextMenu.entry)}
+      onduplicate={() => contextMenu?.entry && void doDuplicate(contextMenu.entry)}
+      onselectall={() => doSelectAll()}
+      onproperties={() => contextMenu?.entry && doProperties(contextMenu.entry)}
+      onnewfile={() => void doCreateFile(path)}
+      onnewfolder={() => void doCreateFolder(path)}
+      onundo={() => void doUndo()}
+      onredo={() => void doRedo()}
       onclose={() => (contextMenu = null)}
     />
   {/if}

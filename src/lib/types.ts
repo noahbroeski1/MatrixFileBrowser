@@ -75,9 +75,15 @@ export interface Backend {
   homeDir(): Promise<string>;
   reveal(path: string): Promise<void>;
   openPath(path: string): Promise<void>;
+  openWith(path: string, app: string): Promise<void>;
+  createFile(path: string): Promise<string>;
+  createDir(path: string): Promise<string>;
+  restoreItems(paths: string[]): Promise<void>;
+  emptyTrash(): Promise<void>;
   previewText(path: string, maxBytes: number): Promise<string>;
   renamePath(path: string, newName: string): Promise<string>;
   moveItems(paths: string[], destDir: string): Promise<string[]>;
+  copyItems(paths: string[], destDir: string): Promise<string[]>;
   trashItems(paths: string[]): Promise<void>;
   watchStart(paths: string[]): Promise<void>;
   onChanged(cb: (dirs: string[]) => void): Promise<() => void>;
