@@ -69,8 +69,9 @@
           .thumbnails([current.path], 720)
           .then((refs) => {
             if (!cancelled && refs[0]) thumb = assetUrl(refs[0].thumbPath);
+            else console.warn('preview thumb missing', current.path, refs);
           })
-          .catch(() => {})
+          .catch((e) => { console.warn('preview thumb error', current.path, e); })
           .finally(() => {
             if (!cancelled) busy = false;
           });
@@ -153,9 +154,7 @@
     </div>
   {:else}
     <div class="hero">
-      {#if isImage(entry.ext)}
-        <img src={assetUrl(entry.path)} alt={entry.name} />
-      {:else if isVideo(entry.ext)}
+      {#if isVideo(entry.ext)}
         <video src={assetUrl(entry.path)} controls preload="metadata" poster={thumb ?? undefined}><track kind="captions" /></video>
       {:else if isAudio(entry.ext)}
         <div class="audio-hero">
