@@ -153,7 +153,9 @@
     </div>
   {:else}
     <div class="hero">
-      {#if isVideo(entry.ext)}
+      {#if isImage(entry.ext)}
+        <img src={assetUrl(entry.path)} alt={entry.name} />
+      {:else if isVideo(entry.ext)}
         <video src={assetUrl(entry.path)} controls preload="metadata" poster={thumb ?? undefined}><track kind="captions" /></video>
       {:else if isAudio(entry.ext)}
         <div class="audio-hero">
