@@ -51,9 +51,12 @@ pub fn list_dir(dir: &Path, opts: &ListOptions) -> io::Result<DirPage> {
     let mut entries: Vec<Entry> = Vec::new();
     for item in fs::read_dir(dir)? {
         let Ok(item) = item else { continue };
-        let Ok(entry) = Entry::from_path(&item.path()) else {
+        let Ok(mut entry) = Entry::from_path(&item.path()) else {
             continue;
         };
+        if entry.kind == crate::entry::EntryKind::Dir {
+            entry.size = dir_size(&item.path());
+        }
         if !opts.show_hidden && entry.is_hidden {
             continue;
         }
@@ -78,6 +81,23 @@ pub fn list_dir(dir: &Path, opts: &ListOptions) -> io::Result<DirPage> {
         next_offset,
         total,
     })
+}
+
+fn dir_size(path: &Path) -> u64 {
+    let mut total = 0u64;
+    if let Ok(read) = fs::read_dir(path) {
+        for entry in read.flatten() {
+            let p = entry.path();
+            if let Ok(meta) = fs::symlink_metadata(&p) {
+                if meta.is_dir() {
+                    total += dir_size(&p);
+                } else if meta.is_file() {
+                    total += meta.len();
+                }
+            }
+        }
+    }
+    total
 }
 
 fn sort_entries(entries: &mut [Entry], key: SortKey, descending: bool, dirs_first: bool) {

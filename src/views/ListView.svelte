@@ -84,7 +84,7 @@
             <EntryIcon {entry} size={15} />
             <span class="name truncate">{entry.name}</span>
           </span>
-          <span class="size mono">{entry.kind === 'dir' ? '—' : formatBytes(entry.size)}</span>
+          <span class="size mono">{formatBytes(entry.size)}</span>
           <span class="date">{formatDate(entry.mtimeMs)}</span>
         </button>
       {/each}

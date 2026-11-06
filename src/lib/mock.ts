@@ -323,6 +323,17 @@ export function createMockBackend(): Backend {
       }
 
       let entries = (node.children ?? []).map(toEntry);
+      // Compute folder sizes for mock
+      for (const entry of entries) {
+        if (entry.kind === 'dir') {
+          const n = index.get(entry.path);
+          if (n) {
+            // compute recursively
+            const sizeOf = (nd: Node): number => nd.kind === 'file' ? nd.size : (nd.children ?? []).reduce((s, c) => s + sizeOf(c), 0);
+            entry.size = sizeOf(n);
+          }
+        }
+      }
       if (!req.showHidden) entries = entries.filter((entry) => !entry.isHidden);
       if (req.filter) {
         const needle = req.filter.toLowerCase();
