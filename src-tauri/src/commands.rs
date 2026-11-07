@@ -156,7 +156,10 @@ pub fn move_items(paths: Vec<String>, dest_dir: String) -> Result<Vec<String>, S
         let name = src.file_name().ok_or_else(|| format!("bad path {path}"))?;
         let target = dest.join(name);
         if target.exists() {
-            return Err(format!("{} already exists in destination", target.display()));
+            return Err(format!(
+                "{} already exists in destination",
+                target.display()
+            ));
         }
         // Try rename first (same filesystem); fall back to copy+remove.
         if std::fs::rename(src, &target).is_err() {
@@ -193,7 +196,9 @@ pub fn trash_items(paths: Vec<String>) -> Result<(), String> {
     let data_home = std::env::var_os("XDG_DATA_HOME")
         .map(std::path::PathBuf::from)
         .filter(|p| p.is_absolute())
-        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share")))
+        .or_else(|| {
+            std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share"))
+        })
         .ok_or_else(|| "no data home".to_string())?;
     let trash_files = data_home.join("Trash").join("files");
     let trash_info = data_home.join("Trash").join("info");
@@ -212,8 +217,14 @@ pub fn trash_items(paths: Vec<String>) -> Result<(), String> {
         let mut target = trash_files.join(&name);
         let mut counter = 1;
         while target.exists() {
-            let stem = src.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-            let ext = src.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+            let stem = src
+                .file_stem()
+                .map(|s| s.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            let ext = src
+                .extension()
+                .map(|e| format!(".{}", e.to_string_lossy()))
+                .unwrap_or_default();
             target = trash_files.join(format!("{stem}.{counter}{ext}"));
             counter += 1;
         }
@@ -263,7 +274,20 @@ fn days_to_ymd(mut days: u64) -> (u64, u64, u64) {
         y += 1;
     }
     let leap = is_leap(y);
-    let month_days = [31u64, if leap { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let month_days = [
+        31u64,
+        if leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
     let mut m = 0u64;
     for md in month_days.iter() {
         if days < *md {
@@ -316,7 +340,9 @@ pub fn restore_items(paths: Vec<String>) -> Result<(), String> {
     let data_home = std::env::var_os("XDG_DATA_HOME")
         .map(std::path::PathBuf::from)
         .filter(|p| p.is_absolute())
-        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share")))
+        .or_else(|| {
+            std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share"))
+        })
         .ok_or_else(|| "no data home".to_string())?;
     let trash_files = data_home.join("Trash").join("files");
     let trash_info = data_home.join("Trash").join("info");
@@ -355,8 +381,14 @@ pub fn copy_items(paths: Vec<String>, dest_dir: String) -> Result<Vec<String>, S
     for path in paths {
         let src = std::path::Path::new(&path);
         let name = src.file_name().ok_or_else(|| format!("bad path {path}"))?;
-        let stem = src.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-        let ext = src.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+        let stem = src
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let ext = src
+            .extension()
+            .map(|e| format!(".{}", e.to_string_lossy()))
+            .unwrap_or_default();
         let mut target = dest.join(name);
         if target.exists() {
             let mut i = 1;
@@ -384,7 +416,9 @@ pub fn empty_trash() -> Result<(), String> {
     let data_home = std::env::var_os("XDG_DATA_HOME")
         .map(std::path::PathBuf::from)
         .filter(|p| p.is_absolute())
-        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share")))
+        .or_else(|| {
+            std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share"))
+        })
         .ok_or_else(|| "no data home".to_string())?;
     let trash_files = data_home.join("Trash").join("files");
     let trash_info = data_home.join("Trash").join("info");

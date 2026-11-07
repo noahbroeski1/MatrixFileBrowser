@@ -9,6 +9,7 @@
     entry?: Entry | null;
     canUndo?: boolean;
     canRedo?: boolean;
+    canPaste?: boolean;
     onopen?: () => void;
     onopenwith?: () => void;
     onrename?: () => void;
@@ -19,13 +20,14 @@
     onundo?: () => void;
     onredo?: () => void;
     oncopy?: () => void;
+    onpaste?: () => void;
     onduplicate?: () => void;
     onselectall?: () => void;
     onproperties?: () => void;
     onclose: () => void;
   }
 
-  let { x, y, entry = null, canUndo = false, canRedo = false, onopen, onopenwith, onrename, ontrash, onmove, onnewfile, onnewfolder, onundo, onredo, oncopy, onduplicate, onselectall, onproperties, onclose }: Props = $props();
+  let { x, y, entry = null, canUndo = false, canRedo = false, canPaste = false, onopen, onopenwith, onrename, ontrash, onmove, onnewfile, onnewfolder, onundo, onredo, oncopy, onpaste, onduplicate, onselectall, onproperties, onclose }: Props = $props();
 
   // Clamp to viewport
   let left = $derived(Math.min(x, (typeof window !== 'undefined' ? window.innerWidth : 800) - 200));
@@ -62,6 +64,12 @@
   <div class="sep"></div>
   <button role="menuitem" onclick={() => { onselectall?.(); onclose(); }}>
     <Icon name="code" size={14} /> Select all
+  </button>
+  <button role="menuitem" onclick={() => { oncopy?.(); onclose(); }}>
+    <Icon name="code" size={14} /> Copy
+  </button>
+  <button role="menuitem" disabled={!canPaste} onclick={() => { if (canPaste) { onpaste?.(); onclose(); } }}>
+    <Icon name="code" size={14} /> Paste
   </button>
   <div class="sep"></div>
   <button role="menuitem" onclick={() => { onnewfile?.(); onclose(); }}>
