@@ -10,12 +10,13 @@
     onselect: (entry: Entry, event: MouseEvent) => void;
     onopen: (entry: Entry) => void;
     oncontext?: (entry: Entry, event: MouseEvent) => void;
+    onmove?: (paths: string[], destDir: string) => void;
     onloadmore: () => void;
     hasmore: boolean;
     loadingMore: boolean;
   }
 
-  let { entries, selected, onselect, onopen, oncontext, onloadmore, hasmore, loadingMore }: Props = $props();
+  let { entries, selected, onselect, onopen, oncontext, onmove, onloadmore, hasmore, loadingMore }: Props = $props();
 
   const ROW = 30;
 
@@ -75,6 +76,10 @@
           class:selected={selected.has(entry.id)}
           class:hidden-file={entry.isHidden}
           style="transform: translateY({(start + index) * ROW}px)"
+          draggable="true"
+          ondragstart={(e) => { const paths = selected.has(entry.id) ? entries.filter((x) => selected.has(x.id)).map((x) => x.path) : [entry.path]; e.dataTransfer?.setData('text/plain', JSON.stringify(paths)); if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'; }}
+          ondragover={(e) => { if (entry.kind === 'dir') { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; } }}
+          ondrop={(e) => { if (entry.kind === 'dir') { e.preventDefault(); try { const paths = JSON.parse(e.dataTransfer?.getData('text/plain') ?? '[]'); if (Array.isArray(paths)) onmove?.(paths, entry.path); } catch {} } }}
           onclick={(event) => onselect(entry, event)}
           ondblclick={() => onopen(entry)}
           oncontextmenu={(event) => { event.preventDefault(); oncontext?.(entry, event); }}

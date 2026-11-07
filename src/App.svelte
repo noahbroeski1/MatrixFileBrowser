@@ -259,6 +259,7 @@
   }
 
   async function doCopy(entry: Entry) {
+    clipboard = [entry.path];
     const dest = window.prompt('Copy to folder (absolute path):', path);
     if (!dest) return;
     try {
@@ -272,6 +273,16 @@
   async function doDuplicate(entry: Entry) {
     try {
       await backend.copyItems([entry.path], path);
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  async function doPaste() {
+    if (clipboard.length === 0) return;
+    try {
+      await backend.copyItems(clipboard, path);
       await reload();
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
@@ -330,6 +341,16 @@
     if (!dest) return;
     try {
       await backend.moveItems(entriesToMove.map((e) => e.path), dest.trim());
+      await reload();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
+  async function doMovePaths(paths: string[], dest: string) {
+    if (!paths.length) return;
+    try {
+      await backend.moveItems(paths, dest);
       await reload();
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
@@ -714,6 +735,7 @@
             onselect={select}
             onopen={open}
             oncontext={(entry, e) => (contextMenu = { x: e.clientX, y: e.clientY, entry })}
+            onmove={(paths, dest) => void doMovePaths(paths, dest)}
             onloadmore={loadMore}
             hasmore={hasMore}
             {loadingMore}
@@ -760,12 +782,14 @@
       entry={contextMenu.entry}
       canUndo={undoStack.length > 0}
       canRedo={redoStack.length > 0}
+      canPaste={clipboard.length > 0}
       onopen={() => contextMenu?.entry && open(contextMenu.entry)}
       onopenwith={() => contextMenu?.entry && void doOpenWith(contextMenu.entry)}
       onrename={() => contextMenu?.entry && void doRename(contextMenu.entry)}
       ontrash={() => contextMenu?.entry && void doTrash([contextMenu.entry])}
       onmove={() => contextMenu?.entry && void doMove([contextMenu.entry])}
-      oncopy={() => contextMenu?.entry && void doCopy(contextMenu.entry)}
+      oncopy={() => { if (contextMenu?.entry) void doCopy(contextMenu.entry); else clipboard = entries.filter((e) => selected.has(e.id)).map((e) => e.path); }}
+      onpaste={() => void doPaste()}
       onduplicate={() => contextMenu?.entry && void doDuplicate(contextMenu.entry)}
       onselectall={() => doSelectAll()}
       onproperties={() => contextMenu?.entry && doProperties(contextMenu.entry)}
